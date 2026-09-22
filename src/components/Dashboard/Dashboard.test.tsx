@@ -234,4 +234,28 @@ describe('Dashboard', () => {
       expect.objectContaining({ method: 'DELETE' }),
     )
   })
+
+  it('mounts the map for the selected vehicle once its position arrives', async () => {
+    fakeTraccar({
+      'GET /api/devices': () => json([device]),
+      'GET /api/positions': () => json([position]),
+    })
+    renderWithProviders(<Dashboard user={user} />)
+
+    const map = await screen.findByTestId('vehicle-map')
+    expect(map).toHaveAttribute('data-device', 'Camión 01')
+    expect(map).toHaveAttribute('data-has-position', 'true')
+  })
+
+  it('asks to pick a vehicle on the map area when several exist', async () => {
+    fakeTraccar({
+      'GET /api/devices': () => json([device, { ...device, id: 8, name: 'Camión 02' }]),
+    })
+    renderWithProviders(<Dashboard user={user} />)
+
+    expect(
+      await screen.findByText('Selecciona un vehículo para verlo en el mapa.'),
+    ).toBeInTheDocument()
+    expect(screen.queryByTestId('vehicle-map')).not.toBeInTheDocument()
+  })
 })
