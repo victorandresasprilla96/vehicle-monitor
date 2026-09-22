@@ -19,6 +19,7 @@ export default function App() {
           error={session.error}
           onRetry={() => session.refetch()}
           retrying={session.isFetching}
+          autoRetrySeconds={15}
         />
       </main>
     )

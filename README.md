@@ -73,6 +73,18 @@ Endpoints utilizados:
 - Si un poll falla y ya había datos, la tarjeta conserva los últimos valores conocidos y lo indica ("Conexión inestable"), en lugar de vaciarse.
 - El vehículo seleccionado vive en la URL (`?device=123`): recargar o compartir el enlace conserva la vista.
 
+## Estados de carga y error
+
+| Situación | Qué ve el operador |
+|---|---|
+| Carga inicial | Skeletons con la **misma estructura y tipografía** que el contenido real (texto de relleno transparente), así que no hay saltos: **CLS medido = 0**. Aparecen tras 300 ms para no destellar en respuestas rápidas. |
+| Servidor caído al arrancar | Error a pantalla completa, "Reintentar" con el foco, **reintento automático cada 15 s** (pantallas desatendidas) y detalles técnicos plegados para soporte. |
+| Falla una carga del panel | Error compacto dentro del panel o la tarjeta, sin tapar el resto de la interfaz. |
+| Falla el polling con datos en pantalla | Banner flotante "Conexión inestable" desde el **primer** fallo (no tras agotar reintentos) y valores atenuados. Al recuperarse: "Conexión restablecida". |
+| Navegador sin conexión | Banner "Sin conexión a internet" (TanStack Query pausa las consultas en lugar de fallar). |
+
+Accesibilidad: los skeletons son `aria-hidden` y la tarjeta usa `aria-busy` con un aviso de carga; solo el mensaje de error va en `role="alert"`, con la cuenta atrás fuera para que no se anuncie cada segundo, y los banners usan `role="status"` (educado, no interrumpe).
+
 ## Datos en tiempo real (simulador)
 
 Una cuenta nueva no tiene dispositivos. Para ver el vehículo moverse:

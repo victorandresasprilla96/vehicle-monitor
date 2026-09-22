@@ -1,6 +1,7 @@
 import { useId } from 'react'
 import type { Device } from '../../api/types'
 import { STATUS_LABEL } from '../../utils/status'
+import { Skeleton } from '../Skeleton/Skeleton'
 import styles from './DeviceSelector.module.css'
 
 interface DeviceSelectorProps {
@@ -63,6 +64,21 @@ export function DeviceSelector({ devices, selectedId, onChange }: DeviceSelector
           />
         </svg>
       </div>
+    </div>
+  )
+}
+
+/** Same label row and control height as the real selector, so nothing moves on load. */
+export function DeviceSelectorSkeleton() {
+  return (
+    <div className={styles.selector} aria-hidden="true">
+      <div className={styles.labelRow}>
+        <span className={styles.label}>Vehículo</span>
+        <span className={styles.hint}>
+          <Skeleton text="0 de 0 en línea" />
+        </span>
+      </div>
+      <Skeleton height="var(--tap-target-min)" radius="md" />
     </div>
   )
 }
