@@ -34,8 +34,9 @@ npm run dev
 | `npm run build` | Type-check + build de producción |
 | `npm run preview` | Sirve el build localmente |
 | `npm run lint` | oxlint (incluye accesibilidad `jsx-a11y`) |
-| `npm run test` | Tests con Vitest |
-| `npm run format` | Prettier sobre `src/` |
+| `npm run test` | Tests con Vitest (`test:watch` en modo watch) |
+| `npm run format` | Prettier sobre `src/` y `scripts/` |
+| `npm run simulate -- <uniqueId>` | Simulador GPS: mueve un dispositivo por Madrid |
 
 ## Variables de entorno
 
@@ -63,3 +64,16 @@ Endpoints utilizados:
 | `GET` | `/api/positions?deviceId={id}` | Última posición del dispositivo (polling) |
 
 > **Credenciales:** las credenciales de ejemplo `admin/admin` y `demo/demo` son rechazadas actualmente (401) por los servidores demo. Los servidores tienen el registro abierto: crea una cuenta en https://demo4.traccar.org y úsala en el login de la app.
+
+## Datos en tiempo real (simulador)
+
+Una cuenta nueva no tiene dispositivos. Para ver el vehículo moverse:
+
+1. En Traccar, crea un dispositivo (**Dispositivos → +**) y anota su *Identificador* (`uniqueId`).
+2. Ejecuta el simulador, que envía posiciones por el protocolo OsmAnd (HTTP, puerto 5055):
+
+   ```bash
+   npm run simulate -- <uniqueId> 5   # una posición cada 5 s
+   ```
+
+   Recorre en bucle Sol → Gran Vía → Plaza de España → Palacio Real, con velocidad variable (20–50 km/h), rumbo real y batería descendente. `TRACCAR_OSMAND_URL` permite apuntar a otro servidor.

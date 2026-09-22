@@ -8,8 +8,10 @@
     "build": "tsc -b && vite build",
     "lint": "oxlint",
     "preview": "vite preview",
-    "test": "vitest",
-    "format": "prettier --write src"
+    "test": "vitest run",
+    "format": "prettier --write src scripts",
+    "test:watch": "vitest",
+    "simulate": "node scripts/simulate.mjs"
   },
   "dependencies": {
     "@tanstack/react-query": "^5.103.2",
