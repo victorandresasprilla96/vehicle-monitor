@@ -1,0 +1,40 @@
+.battery {
+  --battery-color: var(--color-text-muted);
+
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+  vertical-align: top;
+  transition: color var(--duration-slow) var(--ease-standard);
+}
+
+.battery[data-tier='low'] {
+  --battery-color: var(--color-warning);
+  color: var(--color-warning);
+}
+
+.battery[data-tier='critical'] {
+  --battery-color: var(--color-danger);
+  color: var(--color-danger);
+}
+
+.glyph {
+  flex-shrink: 0;
+}
+
+.shell {
+  fill: none;
+  stroke: var(--color-border-strong);
+  stroke-width: 1.5;
+}
+
+.tip {
+  fill: var(--color-border-strong);
+}
+
+.fill {
+  fill: var(--battery-color);
+  transition:
+    width var(--duration-slow) var(--ease-standard),
+    fill var(--duration-slow) var(--ease-standard);
+}

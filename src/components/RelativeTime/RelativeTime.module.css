@@ -1,0 +1,25 @@
+.time {
+  display: inline-flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: var(--space-0-5);
+}
+
+.relative {
+  /* Fixed minimum box: "Hace unos segundos" ↔ "Hace 10 segundos" would otherwise
+     resize the cell every tick and register as layout shift (measured in Chrome). */
+  min-width: 9.5rem;
+  text-align: right;
+  transition: color var(--duration-slow) var(--ease-standard);
+}
+
+.absolute {
+  color: var(--color-text-muted);
+  font-size: var(--font-size-xs);
+  font-weight: var(--font-weight-regular);
+  font-variant-numeric: tabular-nums;
+}
+
+.time[data-old] .relative {
+  color: var(--color-warning);
+}

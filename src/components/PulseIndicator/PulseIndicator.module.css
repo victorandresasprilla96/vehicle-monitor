@@ -1,0 +1,53 @@
+.pulse {
+  --pulse-color: var(--color-offline);
+
+  position: relative;
+  display: inline-block;
+  flex-shrink: 0;
+  width: 0.625rem;
+  height: 0.625rem;
+  border-radius: var(--radius-full);
+  background-color: var(--pulse-color);
+  transition: background-color var(--duration-slow) var(--ease-standard);
+}
+
+.pulse[data-status='online'] {
+  --pulse-color: var(--color-online);
+}
+
+.pulse[data-status='unknown'] {
+  --pulse-color: var(--color-unknown);
+}
+
+/* Hollow ring for offline: distinguishable from online by shape, not only colour */
+.pulse[data-status='offline'] {
+  background-color: transparent;
+  box-shadow: inset 0 0 0 2px var(--pulse-color);
+}
+
+.pulse[data-status='online']::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  background-color: var(--pulse-color);
+  animation: ring var(--duration-pulse) var(--ease-out) infinite;
+}
+
+@keyframes ring {
+  from {
+    opacity: 0.55;
+    transform: scale(1);
+  }
+  to {
+    opacity: 0;
+    transform: scale(2.6);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .pulse[data-status='online']::after {
+    animation: none;
+    opacity: 0;
+  }
+}

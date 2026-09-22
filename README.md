@@ -94,6 +94,22 @@ Accesibilidad: los skeletons son `aria-hidden` y la tarjeta usa `aria-busy` con 
 - **Limitación conocida**: las teselas públicas de OSM son adecuadas para una demo, pero su [política de uso](https://operations.osmfoundation.org/policies/tiles/) no admite tráfico intenso; en producción se usaría un proveedor con clave (MapTiler, Stadia…) cambiando solo `TILE_URL`.
 - **Accesibilidad**: contenedor `role="application"` con instrucciones de teclado, controles de zoom en español ("Acercar" / "Alejar") de 40 px y operables con **Enter y Space** (Leaflet los renderiza como `<a role="button">`, que por defecto solo responde a Enter), el marcador con `role="img"` y descripción ("Camión 01, en línea, 43 km/h, rumbo noreste"), y `prefers-reduced-motion` desactiva interpolación, pulso y animaciones de zoom.
 
+## Tarjeta de estado y micro-interacciones
+
+Criterio: **guiar la mirada sin distraer**. Con polling cada 5 s, animar todo sería ruido.
+
+| Dato | Comportamiento |
+|---|---|
+| Estado de conexión | Punto con **pulso** solo si está en línea (anillo hueco si no hay conexión, así que la forma distingue además del color); la etiqueta hace un fundido al cambiar. |
+| Velocidad | Fundido suave en cada cambio; **realce de color solo si varía ≥ 5 km/h**. |
+| Batería | Icono con nivel; el color marca **umbrales** (≤ 20 % aviso, ≤ 10 % crítico), y el umbral también se anuncia en texto. |
+| Última actualización | Tiempo relativo que se actualiza solo ("Hace 25 segundos") sobre la hora exacta; pasa a ámbar y se marca "datos antiguos" si supera 2 min. Solo ese texto se re-renderiza cada segundo. |
+| Coordenadas | Sin animación, porque cambian en cada consulta. |
+
+**Lectores de pantalla** (`role="status"`, educado): solo se anuncian cambios con significado, es decir, estado de conexión, *"se ha detenido"* / *"se ha puesto en marcha"*, cruce de umbral de batería y saltos de velocidad de ≥ 20 km/h. Nunca se lee la velocidad en cada consulta, y cambiar de vehículo reinicia la referencia en silencio.
+
+El realce es un pseudo-elemento detrás del texto (sin impacto en el layout) y se reinicia cambiando la `key` del elemento, sin temporizadores. Con `prefers-reduced-motion` no hay animaciones.
+
 ## Datos en tiempo real (simulador)
 
 Una cuenta nueva no tiene dispositivos. Para ver el vehículo moverse:
@@ -105,7 +121,7 @@ Una cuenta nueva no tiene dispositivos. Para ver el vehículo moverse:
    npm run simulate -- <uniqueId> 5   # una posición cada 5 s
    ```
 
-   Recorre en bucle Sol → Gran Vía → Plaza de España → Palacio Real, con velocidad variable (20–50 km/h), rumbo real y batería descendente. Hay una segunda ruta alrededor del Retiro para simular otro vehículo a la vez:
+   Recorre en bucle Sol → Gran Vía → Plaza de España → Palacio Real con conducción realista: velocidad gradual (15–55 km/h, ±4 km/h por envío), paradas ocasionales, rumbo real y batería que se descarga y hace una parada de recarga al bajar del 8 %. Hay una segunda ruta alrededor del Retiro para simular otro vehículo a la vez:
 
    ```bash
    npm run simulate -- <uniqueId-2> 4 retiro

@@ -1,0 +1,51 @@
+.value {
+  position: relative;
+  isolation: isolate;
+  display: inline-block;
+  /* Baseline alignment of inline-block + inline-flex children adds ~1.5px to the
+     line box; top alignment keeps rows exactly as tall as their skeletons. */
+  vertical-align: top;
+}
+
+/* Every change: the new value settles in (fade + 2px rise) */
+.value[data-changed] {
+  animation: settle var(--duration-base) var(--ease-out);
+}
+
+/* Significant change: a soft wash behind the text that fades away.
+   Absolutely positioned pseudo-element → zero layout impact. */
+.value[data-highlight]::before {
+  content: '';
+  position: absolute;
+  inset: -0.125rem -0.375rem;
+  z-index: -1;
+  border-radius: var(--radius-sm);
+  background-color: var(--color-highlight);
+  opacity: 0;
+  animation: wash var(--duration-highlight) var(--ease-out);
+}
+
+@keyframes settle {
+  from {
+    opacity: 0.35;
+    transform: translateY(2px);
+  }
+}
+
+@keyframes wash {
+  0%,
+  15% {
+    opacity: 1;
+  }
+  100% {
+    opacity: 0;
+  }
+}
+
+/* Reduced motion: no movement; keep a static, instant change only */
+@media (prefers-reduced-motion: reduce) {
+  .value[data-changed],
+  .value[data-highlight]::before {
+    animation: none;
+  }
+}
