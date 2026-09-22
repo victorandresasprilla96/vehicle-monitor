@@ -91,7 +91,8 @@ Accesibilidad: los skeletons son `aria-hidden` y la tarjeta usa `aria-busy` con 
 - **Marcador SVG**: disco con el color del estado (verde en línea, gris sin conexión, ámbar sin señal reciente), una flecha que **rota según `course`** y un pulso solo cuando el vehículo está en línea.
 - **Movimiento suave** ([`markerAnimator.ts`](src/components/VehicleMap/markerAnimator.ts)): interpolación con `requestAnimationFrame` de 1.5 s y *ease-out*. La rotación toma el camino más corto, los saltos de más de 2 km se muestran como salto y, si llega una posición nueva a mitad de animación, continúa desde donde está. Escribe directamente en Leaflet, **sin re-renderizar React** en cada frame.
 - **Seguimiento de cámara**: `panTo` con `easeLinearity: 1/3` (equivale a *ease-out cubic*, la misma curva que el marcador), así que el vehículo se mantiene centrado (medido: desviación ≤ 0.9 px). Arrastrar el mapa o moverlo con las flechas desactiva el seguimiento; el botón **"Seguir vehículo"** (`aria-pressed`) lo reactiva.
-- **Accesibilidad**: contenedor `role="application"` con instrucciones de teclado, controles de zoom en español ("Acercar" / "Alejar") de 40 px, el marcador con `role="img"` y descripción ("Camión 01, en línea, 43 km/h, rumbo noreste"), y `prefers-reduced-motion` desactiva interpolación, pulso y animaciones de zoom.
+- **Limitación conocida**: las teselas públicas de OSM son adecuadas para una demo, pero su [política de uso](https://operations.osmfoundation.org/policies/tiles/) no admite tráfico intenso; en producción se usaría un proveedor con clave (MapTiler, Stadia…) cambiando solo `TILE_URL`.
+- **Accesibilidad**: contenedor `role="application"` con instrucciones de teclado, controles de zoom en español ("Acercar" / "Alejar") de 40 px y operables con **Enter y Space** (Leaflet los renderiza como `<a role="button">`, que por defecto solo responde a Enter), el marcador con `role="img"` y descripción ("Camión 01, en línea, 43 km/h, rumbo noreste"), y `prefers-reduced-motion` desactiva interpolación, pulso y animaciones de zoom.
 
 ## Datos en tiempo real (simulador)
 
@@ -104,7 +105,13 @@ Una cuenta nueva no tiene dispositivos. Para ver el vehículo moverse:
    npm run simulate -- <uniqueId> 5   # una posición cada 5 s
    ```
 
-   Recorre en bucle Sol → Gran Vía → Plaza de España → Palacio Real, con velocidad variable (20–50 km/h), rumbo real y batería descendente. `TRACCAR_OSMAND_URL` permite apuntar a otro servidor.
+   Recorre en bucle Sol → Gran Vía → Plaza de España → Palacio Real, con velocidad variable (20–50 km/h), rumbo real y batería descendente. Hay una segunda ruta alrededor del Retiro para simular otro vehículo a la vez:
+
+   ```bash
+   npm run simulate -- <uniqueId-2> 4 retiro
+   ```
+
+   `TRACCAR_OSMAND_URL` permite apuntar a otro servidor.
 
 ## Sistema de diseño
 

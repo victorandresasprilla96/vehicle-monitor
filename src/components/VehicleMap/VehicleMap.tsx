@@ -7,6 +7,7 @@ import { STATUS_LABEL } from '../../utils/status'
 import { courseToCompassLong, knotsToKmh } from '../../utils/units'
 import { MapSkeleton } from '../MapSkeleton/MapSkeleton'
 import { MARKER_ANIMATION_MS } from './markerAnimator'
+import { enableSpaceActivation } from './spaceActivation'
 import { VehicleMarker } from './VehicleMarker'
 import styles from './VehicleMap.module.css'
 
@@ -146,6 +147,8 @@ function MapBehaviour({ deviceId, target, following, animate, onUserMove }: MapB
       'Mapa del vehículo. Usa las flechas para desplazarte y las teclas más y menos para el zoom.',
     )
     map.attributionControl?.setPrefix('<a href="https://leafletjs.com">Leaflet</a>')
+    // Zoom controls are <a role="button">: make Space work like on a real button
+    return enableSpaceActivation(el)
   }, [map])
 
   // Dragging or keyboard-panning means the operator is looking elsewhere: stop following.

@@ -150,10 +150,12 @@
 }
 
 /* ---------- Overlays ---------- */
+/* Bottom-left at every size: the connection banner owns the top centre,
+   zoom + attribution own the bottom right. Same place on mobile and desktop. */
 .follow {
   position: absolute;
-  top: var(--space-4);
-  right: var(--space-4);
+  bottom: var(--space-4);
+  left: var(--space-4);
   z-index: var(--z-overlay);
   display: inline-flex;
   align-items: center;
@@ -185,16 +187,6 @@
 
 .follow:disabled {
   opacity: 0.6;
-}
-
-/* On narrow screens the banner is centred at the top: move the button down-left */
-@media (max-width: 40rem) {
-  .follow {
-    top: auto;
-    right: auto;
-    bottom: var(--space-4);
-    left: var(--space-4);
-  }
 }
 
 .overlay {

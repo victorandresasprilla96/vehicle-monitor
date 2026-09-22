@@ -2,31 +2,53 @@
 // Simulates a GPS tracker driving a loop around central Madrid.
 // Sends positions to Traccar using the OsmAnd protocol (HTTP, port 5055).
 //
-// Usage: npm run simulate -- <deviceUniqueId> [intervalSeconds]
+// Usage: npm run simulate -- <deviceUniqueId> [intervalSeconds] [route]
+//   route: "centro" (default) or "retiro"
 //   TRACCAR_OSMAND_URL overrides the target (default http://demo4.traccar.org:5055)
 
 const uniqueId = process.argv[2] ?? process.env.TRACCAR_DEVICE_UNIQUE_ID
 const intervalS = Number(process.argv[3] ?? 5)
+const routeName = process.argv[4] ?? 'centro'
 const target = process.env.TRACCAR_OSMAND_URL ?? 'http://demo4.traccar.org:5055'
 
 if (!uniqueId) {
-  console.error('Usage: npm run simulate -- <deviceUniqueId> [intervalSeconds]')
+  console.error('Usage: npm run simulate -- <deviceUniqueId> [intervalSeconds] [centro|retiro]')
   process.exit(1)
 }
 
-// Closed loop: Puerta del Sol → Gran Vía → Plaza de España → Palacio Real → Sol
-const route = [
-  [40.4169, -3.7035],
-  [40.4199, -3.7016],
-  [40.4203, -3.7058],
-  [40.4224, -3.7122],
-  [40.4231, -3.7153],
-  [40.4192, -3.7142],
-  [40.4179, -3.7143],
-  [40.4153, -3.7101],
-  [40.4155, -3.7074],
-  [40.4169, -3.7035],
-]
+const ROUTES = {
+  // Closed loop: Puerta del Sol → Gran Vía → Plaza de España → Palacio Real → Sol
+  centro: [
+    [40.4169, -3.7035],
+    [40.4199, -3.7016],
+    [40.4203, -3.7058],
+    [40.4224, -3.7122],
+    [40.4231, -3.7153],
+    [40.4192, -3.7142],
+    [40.4179, -3.7143],
+    [40.4153, -3.7101],
+    [40.4155, -3.7074],
+    [40.4169, -3.7035],
+  ],
+  // Closed loop: Cibeles → Puerta de Alcalá → around El Retiro → Atocha → Prado → Cibeles
+  retiro: [
+    [40.4193, -3.6931],
+    [40.42, -3.6886],
+    [40.4213, -3.6829],
+    [40.4178, -3.6763],
+    [40.4103, -3.6784],
+    [40.4077, -3.6862],
+    [40.4088, -3.6905],
+    [40.4138, -3.6925],
+    [40.4193, -3.6931],
+  ],
+}
+
+const route = ROUTES[routeName]
+if (!route) {
+  console.error(`Unknown route "${routeName}". Use: ${Object.keys(ROUTES).join(', ')}`)
+  process.exit(1)
+}
 
 const toRad = (d) => (d * Math.PI) / 180
 const toDeg = (r) => (r * 180) / Math.PI
@@ -97,6 +119,8 @@ async function tick() {
   }
 }
 
-console.log(`Simulating device "${uniqueId}" → ${target} every ${intervalS}s (Ctrl+C to stop)`)
+console.log(
+  `Simulating device "${uniqueId}" on route "${routeName}" → ${target} every ${intervalS}s (Ctrl+C to stop)`,
+)
 tick()
 setInterval(tick, intervalS * 1000)
