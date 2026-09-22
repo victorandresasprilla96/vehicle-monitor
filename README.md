@@ -65,6 +65,14 @@ Endpoints utilizados:
 
 > **Credenciales:** las credenciales de ejemplo `admin/admin` y `demo/demo` son rechazadas actualmente (401) por los servidores demo. Los servidores tienen el registro abierto: crea una cuenta en https://demo4.traccar.org y úsala en el login de la app.
 
+## Capa de datos y resiliencia
+
+- [`api/client.ts`](src/api/client.ts) — `fetch` con cookie de sesión, *timeout* de 10 s combinado con la cancelación de TanStack Query, y **errores tipados** (`auth`, `network`, `timeout`, `server`, `unknown`). Los cuerpos de error de Traccar (trazas Java) nunca llegan a la UI.
+- [`api/queryClient.ts`](src/api/queryClient.ts) — reintentos con *backoff* exponencial (1 s → 2 s → 4 s) solo para fallos transitorios; un 401 no se reintenta. Si la sesión caduca durante el polling, se vuelve al login con un aviso.
+- Polling: posición cada `VITE_POLL_INTERVAL_MS` (5 s) y lista de dispositivos cada 10 s para mantener el estado de conexión al día. Se pausa en pestañas en segundo plano.
+- Si un poll falla y ya había datos, la tarjeta conserva los últimos valores conocidos y lo indica ("Conexión inestable"), en lugar de vaciarse.
+- El vehículo seleccionado vive en la URL (`?device=123`): recargar o compartir el enlace conserva la vista.
+
 ## Datos en tiempo real (simulador)
 
 Una cuenta nueva no tiene dispositivos. Para ver el vehículo moverse:

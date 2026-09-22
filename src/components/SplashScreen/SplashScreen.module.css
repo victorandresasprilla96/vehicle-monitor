@@ -1,0 +1,33 @@
+.splash {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-4);
+  min-height: 100dvh;
+  background-color: var(--color-bg);
+}
+
+.mark {
+  animation: breathe 1.6s var(--ease-in-out) infinite;
+}
+
+.text {
+  color: var(--color-text-muted);
+  font-size: var(--font-size-sm);
+  /* Only appears if the check is slow, so fast loads show just the mark */
+  animation: appear var(--duration-base) var(--ease-out) 600ms both;
+}
+
+@keyframes breathe {
+  50% {
+    opacity: 0.55;
+    transform: scale(0.96);
+  }
+}
+
+@keyframes appear {
+  from {
+    opacity: 0;
+  }
+}

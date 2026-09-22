@@ -6,6 +6,10 @@
   },
   "rules": {
     "react/rules-of-hooks": "error",
-    "react/only-export-components": ["warn", { "allowConstantExport": true }]
+    "react/only-export-components": ["warn", { "allowConstantExport": true }],
+    // Would force <output> for role="status". <output> is meant for form calculation
+    // results and its live-region behaviour is inconsistent across screen readers;
+    // role="status" on a <p>/<div> is the WAI-ARIA recommended pattern for status messages.
+    "jsx-a11y/prefer-tag-over-role": "off"
   }
 }

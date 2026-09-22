@@ -26,10 +26,6 @@
   min-width: 0;
 }
 
-.mark {
-  flex-shrink: 0;
-}
-
 .title {
   display: flex;
   flex-direction: column;
