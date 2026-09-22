@@ -1,9 +1,14 @@
 import { useId, type ReactNode } from 'react'
 import type { Device, Position } from '../../api/types'
+import { useVehicleAnnouncements } from '../../hooks/useVehicleAnnouncements'
 import { formatTimestamp, lastSeen } from '../../utils/format'
 import { STATUS_LABEL } from '../../utils/status'
 import { courseToCompass, courseToCompassLong, knotsToKmh } from '../../utils/units'
+import { AnimatedValue } from '../AnimatedValue/AnimatedValue'
+import { BatteryLevel } from '../BatteryLevel/BatteryLevel'
 import { ErrorState } from '../ErrorState/ErrorState'
+import { PulseIndicator } from '../PulseIndicator/PulseIndicator'
+import { RelativeTime } from '../RelativeTime/RelativeTime'
 import { Skeleton } from '../Skeleton/Skeleton'
 import styles from './StatusCard.module.css'
 
@@ -39,6 +44,7 @@ export function StatusCard({
   const headingId = useId()
   const loading = isLoading || device === null
   const failed = !loading && Boolean(error) && !position
+  const announcement = useVehicleAnnouncements(loading ? null : device, position)
 
   let body: ReactNode
   if (loading) {
@@ -83,8 +89,8 @@ export function StatusCard({
         </h2>
         {device ? (
           <p className={styles.status} data-status={device.status}>
-            <span className={styles.dot} aria-hidden="true" />
-            {STATUS_LABEL[device.status]}
+            <PulseIndicator status={device.status} />
+            <AnimatedValue value={device.status}>{STATUS_LABEL[device.status]}</AnimatedValue>
           </p>
         ) : (
           <p className={styles.status}>
@@ -93,10 +99,11 @@ export function StatusCard({
         )}
       </header>
 
-      {/* Announced once when loading starts; empty (silent) otherwise */}
+      {/* Single polite live region: loading progress, then only meaningful
+          changes (status, stop/start, battery thresholds, big speed jumps). */}
       <p className="sr-only" role="status">
         {!loading
-          ? ''
+          ? announcement
           : slow
             ? 'Está tardando más de lo habitual. Seguimos intentándolo…'
             : `Cargando datos${device ? ` de ${device.name}` : ' del vehículo'}…`}
@@ -141,25 +148,44 @@ function LoadingRows() {
         <Skeleton text="00.00000, -0.00000" />
       </Row>
       <Row label="Última actualización">
-        <Skeleton text="00:00:00" />
+        <span className={styles.stack}>
+          <Skeleton text="Hace unos segundos" />
+          <span className={styles.stackSub}>
+            <Skeleton text="00:00:00" />
+          </span>
+        </span>
       </Row>
     </dl>
   )
 }
 
+/** Speed only gets the colour highlight for a change a person would notice. */
+const significantSpeedChange = (a: number, b: number) => Math.abs(a - b) >= 5
+
 function DataRows({ position }: { position: Position }) {
   const battery = position.attributes.batteryLevel
   const course = Math.round(position.course)
+  const speed = Math.round(knotsToKmh(position.speed))
 
   return (
     <dl className={styles.data}>
       <Row label="Velocidad" valueClass={styles.speed}>
-        {Math.round(knotsToKmh(position.speed))}{' '}
+        <AnimatedValue value={speed} highlightWhen={significantSpeedChange}>
+          {speed}
+        </AnimatedValue>{' '}
         <abbr title="kilómetros por hora" className={styles.unit}>
           km/h
         </abbr>
       </Row>
-      <Row label="Batería">{battery === undefined ? '—' : `${Math.round(battery)} %`}</Row>
+      <Row label="Batería">
+        {battery === undefined ? (
+          '—'
+        ) : (
+          <AnimatedValue value={Math.round(battery)}>
+            <BatteryLevel level={battery} />
+          </AnimatedValue>
+        )}
+      </Row>
       <Row label="Rumbo">
         <span aria-hidden="true">
           {course}° {courseToCompass(position.course)}
@@ -172,7 +198,7 @@ function DataRows({ position }: { position: Position }) {
         {position.latitude.toFixed(5)}, {position.longitude.toFixed(5)}
       </Row>
       <Row label="Última actualización">
-        <time dateTime={position.fixTime}>{formatTimestamp(position.fixTime)}</time>
+        <RelativeTime iso={position.fixTime} />
       </Row>
     </dl>
   )

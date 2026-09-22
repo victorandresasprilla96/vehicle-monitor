@@ -73,15 +73,45 @@ function bearing([lat1, lon1], [lat2, lon2]) {
 
 let segment = 0
 let progressM = 0
-let battery = 100
+let battery = 60 + Math.random() * 40
+let speedKmh = 30
+// Driving behaviour: 'driving' | 'stopped' (traffic light/delivery) | 'charging'
+let mode = 'driving'
+let modeTicksLeft = 0
+
+const clamp = (v, lo, hi) => Math.min(hi, Math.max(lo, v))
+
+/** Realistic urban behaviour: gradual speed, occasional stops, a charging stop when low. */
+function nextSpeed() {
+  if (mode === 'charging') {
+    battery = Math.min(100, battery + 6)
+    if (battery >= 95) mode = 'driving'
+    return 0
+  }
+  if (mode === 'stopped') {
+    if (--modeTicksLeft <= 0) mode = 'driving'
+    return 0
+  }
+  if (battery <= 8) {
+    mode = 'charging'
+    return 0
+  }
+  if (Math.random() < 0.04) {
+    mode = 'stopped'
+    modeTicksLeft = 3 + Math.floor(Math.random() * 4) // 12–24 s at 4 s/tick
+    return 0
+  }
+  // Accelerate from a stop, then drift ±4 km/h within 15–55 km/h
+  const base = speedKmh < 5 ? 18 : speedKmh
+  return clamp(base + (Math.random() - 0.5) * 8, 15, 55)
+}
 
 async function tick() {
   const from = route[segment]
   const to = route[(segment + 1) % route.length]
   const segLen = distanceM(from, to)
 
-  // Urban speed with some variation: 20–50 km/h
-  const speedKmh = 20 + Math.random() * 30
+  speedKmh = nextSpeed()
   progressM += (speedKmh / 3.6) * intervalS
 
   while (progressM >= segLen) {
@@ -96,7 +126,7 @@ async function tick() {
   const lon = a[1] + (b[1] - a[1]) * t
   const course = bearing(a, b)
   const speedKnots = speedKmh / 1.852
-  battery = Math.max(5, battery - 0.2)
+  if (mode === 'driving') battery = Math.max(1, battery - 0.25)
 
   const params = new URLSearchParams({
     id: uniqueId,
@@ -112,7 +142,7 @@ async function tick() {
     const res = await fetch(`${target}/?${params}`)
     console.log(
       `${new Date().toLocaleTimeString()}  ${res.status}  ${lat.toFixed(5)}, ${lon.toFixed(5)}  ` +
-        `${speedKmh.toFixed(0)} km/h  ${course.toFixed(0)}°  ${battery.toFixed(0)}%`,
+        `${speedKmh.toFixed(0)} km/h  ${course.toFixed(0)}°  ${battery.toFixed(0)}%  ${mode}`,
     )
   } catch (err) {
     console.error(`${new Date().toLocaleTimeString()}  send failed: ${err.message}`)
