@@ -1,5 +1,6 @@
 import { useId } from 'react'
 import type { Device, Position } from '../../api/types'
+import { formatTimestamp, lastSeen } from '../../utils/format'
 import { STATUS_LABEL } from '../../utils/status'
 import { courseToCompass, courseToCompassLong, knotsToKmh } from '../../utils/units'
 import styles from './StatusCard.module.css'
@@ -12,15 +13,16 @@ interface StatusCardProps {
   isStale: boolean
 }
 
-const timeFormat = new Intl.DateTimeFormat('es-ES', {
-  hour: '2-digit',
-  minute: '2-digit',
-  second: '2-digit',
-})
-
 export function StatusCard({ device, position, isLoading, isStale }: StatusCardProps) {
   const headingId = useId()
   const battery = position?.attributes.batteryLevel
+  const seenAt = lastSeen(device, position)
+  const lastUpdateRow = (label: string) => (
+    <div className={styles.row}>
+      <dt>{label}</dt>
+      <dd>{seenAt ? <time dateTime={seenAt}>{formatTimestamp(seenAt)}</time> : 'Nunca'}</dd>
+    </div>
+  )
 
   return (
     <section className={styles.card} aria-labelledby={headingId} aria-busy={isLoading || undefined}>
@@ -43,7 +45,10 @@ export function StatusCard({ device, position, isLoading, isStale }: StatusCardP
       {isLoading ? (
         <p className={styles.empty}>Cargando posición…</p>
       ) : !position ? (
-        <p className={styles.empty}>Este vehículo aún no ha enviado ninguna posición.</p>
+        <>
+          <p className={styles.empty}>Este vehículo aún no ha enviado ninguna posición.</p>
+          <dl className={styles.data}>{lastUpdateRow('Última comunicación')}</dl>
+        </>
       ) : (
         <dl className={styles.data}>
           <div className={styles.row}>
@@ -76,14 +81,7 @@ export function StatusCard({ device, position, isLoading, isStale }: StatusCardP
               {position.latitude.toFixed(5)}, {position.longitude.toFixed(5)}
             </dd>
           </div>
-          <div className={styles.row}>
-            <dt>Última actualización</dt>
-            <dd>
-              <time dateTime={position.fixTime}>
-                {timeFormat.format(new Date(position.fixTime))}
-              </time>
-            </dd>
-          </div>
+          {lastUpdateRow('Última actualización')}
         </dl>
       )}
     </section>
