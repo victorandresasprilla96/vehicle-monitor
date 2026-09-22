@@ -1,4 +1,5 @@
-import { act, screen, within } from '@testing-library/react'
+import { onlineManager } from '@tanstack/react-query'
+import { act, screen } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { queryKeys } from '../../api/queryClient'
 import type { Device, Position, User } from '../../api/types'
@@ -78,7 +79,8 @@ describe('Dashboard', () => {
     routes['GET /api/positions'] = networkDown
     await act(() => queryClient.refetchQueries({ queryKey: queryKeys.position(7) }))
 
-    expect(await screen.findByText(/Conexión inestable/)).toHaveAttribute('role', 'status')
+    const banner = await screen.findByText(/Conexión inestable/)
+    expect(banner.closest('[role=status]')).not.toBeNull()
     // Card is not blanked: last values are still on screen
     expect(screen.getByText('87 %')).toBeInTheDocument()
     expect(screen.getByText('Velocidad').nextElementSibling).toHaveTextContent('50 km/h')
@@ -102,7 +104,8 @@ describe('Dashboard', () => {
     expect(alert).toHaveTextContent('No logramos conectar con el servidor de seguimiento')
 
     routes['GET /api/devices'] = () => json([device])
-    await userEvent.click(within(alert).getByRole('button', { name: 'Reintentar' }))
+    // Retry sits outside the alert region (so a countdown isn't re-announced)
+    await userEvent.click(screen.getByRole('button', { name: 'Reintentar' }))
 
     expect(await screen.findByRole('combobox', { name: 'Vehículo' })).toHaveValue('7')
     expect(screen.queryByRole('alert')).not.toBeInTheDocument()
@@ -137,5 +140,65 @@ describe('Dashboard', () => {
     expect(
       screen.getByText('Selecciona un vehículo para ver su posición y estado.'),
     ).toBeInTheDocument()
+  })
+
+  it('shows a loading skeleton with the final layout, hidden from assistive tech', async () => {
+    fakeTraccar({
+      'GET /api/devices': () => new Promise(() => {}), // never resolves
+    })
+    renderWithProviders(<Dashboard user={user} />)
+
+    const card = await screen.findByRole('region', { name: 'Vehículo' })
+    expect(card).toHaveAttribute('aria-busy', 'true')
+    expect(card).toHaveTextContent('Cargando datos del vehículo…')
+    // Real labels are already in place; placeholder values are aria-hidden
+    expect(screen.getByText('Velocidad')).toBeInTheDocument()
+    expect(screen.getByText('00 km/h')).toHaveAttribute('aria-hidden', 'true')
+  })
+
+  it('reports a failed first position load as an error, not as "no position yet"', async () => {
+    fakeTraccar({
+      'GET /api/devices': () => json([device]),
+      'GET /api/positions': networkDown,
+    })
+    renderWithProviders(<Dashboard user={user} />)
+
+    expect(await screen.findByRole('alert')).toHaveTextContent(
+      'No hemos podido cargar la posición del vehículo',
+    )
+    expect(screen.queryByText(/aún no ha enviado ninguna posición/)).not.toBeInTheDocument()
+    expect(screen.getByRole('button', { name: 'Reintentar' })).toBeInTheDocument()
+  })
+
+  it('confirms when the connection recovers', async () => {
+    const { routes } = fakeTraccar({
+      'GET /api/devices': () => json([device]),
+      'GET /api/positions': () => json([position]),
+    })
+    const { queryClient } = renderWithProviders(<Dashboard user={user} />)
+    await screen.findByText('87 %')
+
+    routes['GET /api/positions'] = networkDown
+    await act(() => queryClient.refetchQueries({ queryKey: queryKeys.position(7) }))
+    await screen.findByText(/Conexión inestable/)
+
+    routes['GET /api/positions'] = () => json([position])
+    await act(() => queryClient.refetchQueries({ queryKey: queryKeys.position(7) }))
+    expect(await screen.findByText(/Conexión restablecida/)).toBeInTheDocument()
+  })
+
+  it('tells the operator when the browser goes offline', async () => {
+    fakeTraccar({
+      'GET /api/devices': () => json([device]),
+      'GET /api/positions': () => json([position]),
+    })
+    renderWithProviders(<Dashboard user={user} />)
+    await screen.findByText('87 %')
+
+    act(() => onlineManager.setOnline(false))
+    expect(await screen.findByText(/Sin conexión a internet/)).toBeInTheDocument()
+
+    act(() => onlineManager.setOnline(true))
+    expect(await screen.findByText(/Conexión restablecida/)).toBeInTheDocument()
   })
 })

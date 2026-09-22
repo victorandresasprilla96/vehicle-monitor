@@ -1,0 +1,77 @@
+.region {
+  position: absolute;
+  top: var(--space-4);
+  left: 50%;
+  z-index: var(--z-overlay);
+  width: max-content;
+  max-width: calc(100% - var(--space-8));
+  transform: translateX(-50%);
+  pointer-events: none;
+}
+
+.banner {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  padding: var(--space-2) var(--space-4);
+  border: var(--border-width) solid var(--color-border);
+  border-left-width: 3px;
+  border-radius: var(--radius-md);
+  background-color: var(--color-surface-raised);
+  box-shadow: var(--shadow-2);
+  pointer-events: auto;
+  animation: slide-in var(--duration-base) var(--ease-out);
+}
+
+.banner[data-variant='offline'] {
+  border-left-color: var(--color-danger);
+}
+
+.banner[data-variant='unstable'] {
+  border-left-color: var(--color-warning);
+}
+
+.banner[data-variant='recovered'] {
+  border-left-color: var(--color-online);
+}
+
+.indicator {
+  flex-shrink: 0;
+  width: 0.5rem;
+  height: 0.5rem;
+  border-radius: var(--radius-full);
+}
+
+.banner[data-variant='offline'] .indicator {
+  background-color: var(--color-danger);
+}
+
+.banner[data-variant='unstable'] .indicator {
+  background-color: var(--color-warning);
+  animation: blink 1.4s var(--ease-in-out) infinite;
+}
+
+.banner[data-variant='recovered'] .indicator {
+  background-color: var(--color-online);
+}
+
+.text {
+  font-size: var(--font-size-sm);
+}
+
+.text strong {
+  font-weight: var(--font-weight-semibold);
+}
+
+@keyframes slide-in {
+  from {
+    opacity: 0;
+    transform: translateY(calc(var(--space-2) * -1));
+  }
+}
+
+@keyframes blink {
+  50% {
+    opacity: 0.35;
+  }
+}

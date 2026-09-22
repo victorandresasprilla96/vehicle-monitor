@@ -121,9 +121,9 @@ describe('App', () => {
     expect(screen.getByRole('combobox', { name: 'Vehículo' })).toHaveValue('7')
     expect(window.location.search).toBe('?device=7')
 
-    const speed = await screen.findByText('Velocidad')
-    expect(speed.nextElementSibling).toHaveTextContent('50 km/h')
-    expect(screen.getByText('87 %')).toBeInTheDocument()
+    // Wait for real data (the skeleton already shows the same labels)
+    expect(await screen.findByText('87 %')).toBeInTheDocument()
+    expect(screen.getByText('Velocidad').nextElementSibling).toHaveTextContent('50 km/h')
   })
 
   it('shows a retryable error when the server is unreachable', async () => {

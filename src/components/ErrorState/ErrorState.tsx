@@ -1,5 +1,6 @@
-import { useEffect, useId, useRef } from 'react'
-import { isApiError } from '../../api/errors'
+import clsx from 'clsx'
+import { useEffect, useId, useRef, useState } from 'react'
+import { isApiError, isRetryable } from '../../api/errors'
 import { errorCopy } from '../../utils/errorCopy'
 import { Button } from '../Button/Button'
 import styles from './ErrorState.module.css'
@@ -10,40 +11,70 @@ interface ErrorStateProps {
   retrying?: boolean
   /** Optional secondary way out (e.g. back to login) */
   secondaryAction?: { label: string; onClick: () => void }
-  /** Move focus to the retry button when shown (for blocking, full-screen errors) */
+  /** Move focus to the retry button when shown (for blocking errors) */
   autoFocus?: boolean
+  /** Smaller variant for use inside a card; heading becomes h3 */
+  compact?: boolean
+  /** What failed to load, e.g. "la posición del vehículo" */
+  context?: string
+  /**
+   * Seconds before retrying on its own, for transient errors only.
+   * Control-room screens are often unattended: they should heal themselves.
+   */
+  autoRetrySeconds?: number
 }
 
 /**
- * Blocking error with empathetic copy and a clear way forward.
- * role="alert" announces it once; Retry receives focus so keyboard and
- * screen reader users land right on the recovery action.
+ * Error with empathetic copy and a clear way forward.
+ * Only the message is inside role="alert" (announced once); the countdown
+ * lives outside it so screen readers aren't told the time every second.
  */
 export function ErrorState({
   error,
   onRetry,
-  retrying,
+  retrying = false,
   secondaryAction,
   autoFocus = true,
+  compact = false,
+  context,
+  autoRetrySeconds,
 }: ErrorStateProps) {
   const { title, description } = errorCopy(error)
   const retryRef = useRef<HTMLButtonElement>(null)
-  const kind = isApiError(error) ? error.kind : 'unknown'
   const titleId = useId()
+  const kind = isApiError(error) ? error.kind : 'unknown'
+  const status = isApiError(error) ? error.status : null
+  const Heading = compact ? 'h3' : 'h2'
+  // When the error was first shown, for the technical details
+  const [shownAt] = useState(() => new Date())
+
+  const autoRetry = isRetryable(error) ? autoRetrySeconds : undefined
+  // Each finished attempt remounts the countdown (new key) = fresh period.
+  const [attempt, setAttempt] = useState(0)
+  const [wasRetrying, setWasRetrying] = useState(retrying)
+  if (wasRetrying !== retrying) {
+    setWasRetrying(retrying)
+    if (!retrying) setAttempt((a) => a + 1)
+  }
 
   useEffect(() => {
     if (autoFocus) retryRef.current?.focus()
   }, [autoFocus])
 
   return (
-    <div className={styles.errorState} role="alert" aria-labelledby={titleId}>
+    <div className={clsx(styles.errorState, compact && styles.compact)}>
       <div className={styles.icon} data-kind={kind} aria-hidden="true">
         {kind === 'network' || kind === 'timeout' ? <SignalOffIcon /> : <AlertIcon />}
       </div>
-      <h2 id={titleId} className={styles.title}>
-        {title}
-      </h2>
-      <p className={styles.description}>{description}</p>
+
+      <div role="alert" aria-labelledby={titleId} className={styles.message}>
+        {context && <p className={styles.context}>No hemos podido cargar {context}</p>}
+        <Heading id={titleId} className={styles.title}>
+          {title}
+        </Heading>
+        <p className={styles.description}>{description}</p>
+      </div>
+
       <div className={styles.actions}>
         <Button
           ref={retryRef}
@@ -51,6 +82,7 @@ export function ErrorState({
           loading={retrying}
           loadingLabel="Reintentando…"
           icon={<RetryIcon />}
+          variant={compact ? 'secondary' : 'primary'}
         >
           Reintentar
         </Button>
@@ -60,8 +92,65 @@ export function ErrorState({
           </Button>
         )}
       </div>
+
+      {autoRetry && !retrying && (
+        <AutoRetryCountdown key={attempt} seconds={autoRetry} onElapsed={onRetry} />
+      )}
+
+      {!compact && (
+        <details className={styles.details}>
+          <summary>Detalles técnicos</summary>
+          <dl>
+            <div>
+              <dt>Tipo</dt>
+              <dd>{kind}</dd>
+            </div>
+            {status !== null && (
+              <div>
+                <dt>HTTP</dt>
+                <dd>{status}</dd>
+              </div>
+            )}
+            <div>
+              <dt>Hora</dt>
+              <dd>
+                <time dateTime={shownAt.toISOString()}>{shownAt.toLocaleTimeString('es-ES')}</time>
+              </dd>
+            </div>
+          </dl>
+        </details>
+      )}
     </div>
   )
+}
+
+/**
+ * Visible countdown that calls onElapsed at 0 and starts over. Kept outside the
+ * alert region by the parent; remounted (via key) after every attempt.
+ */
+function AutoRetryCountdown({ seconds, onElapsed }: { seconds: number; onElapsed: () => void }) {
+  const [remaining, setRemaining] = useState(seconds)
+  const onElapsedRef = useRef(onElapsed)
+
+  useEffect(() => {
+    onElapsedRef.current = onElapsed
+  }, [onElapsed])
+
+  useEffect(() => {
+    let left = seconds
+    const timer = window.setInterval(() => {
+      left -= 1
+      if (left <= 0) {
+        onElapsedRef.current()
+        // Start over even if the caller doesn't report `retrying`
+        left = seconds
+      }
+      setRemaining(left)
+    }, 1000)
+    return () => window.clearInterval(timer)
+  }, [seconds])
+
+  return <p className={styles.countdown}>Reintentaremos automáticamente en {remaining} s</p>
 }
 
 function SignalOffIcon() {

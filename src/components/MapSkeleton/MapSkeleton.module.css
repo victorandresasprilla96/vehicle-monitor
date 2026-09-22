@@ -1,0 +1,70 @@
+.mapSkeleton {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-4);
+  background-color: var(--color-surface-sunken);
+  background-image: radial-gradient(var(--color-border) 1px, transparent 1px);
+  background-size: var(--space-6) var(--space-6);
+}
+
+.locator,
+.label {
+  /* Same 300 ms grace period as text skeletons: fast loads show only the grid */
+  animation: appear var(--duration-base) var(--ease-out) 300ms both;
+}
+
+.locator {
+  position: relative;
+  display: grid;
+  place-items: center;
+  width: var(--space-12);
+  height: var(--space-12);
+}
+
+.dot {
+  width: var(--space-3);
+  height: var(--space-3);
+  border-radius: var(--radius-full);
+  background-color: var(--color-skeleton-shine);
+  box-shadow: 0 0 0 4px var(--color-skeleton);
+}
+
+.ring {
+  position: absolute;
+  inset: 0;
+  border: 2px solid var(--color-skeleton-shine);
+  border-radius: var(--radius-full);
+  animation: locate 1.8s var(--ease-out) 300ms infinite;
+}
+
+.label {
+  color: var(--color-text-muted);
+  font-size: var(--font-size-sm);
+}
+
+@keyframes appear {
+  from {
+    opacity: 0;
+  }
+}
+
+@keyframes locate {
+  from {
+    opacity: 0.9;
+    transform: scale(0.3);
+  }
+  to {
+    opacity: 0;
+    transform: scale(1);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .ring {
+    display: none;
+  }
+}

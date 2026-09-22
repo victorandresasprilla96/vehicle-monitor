@@ -1,0 +1,75 @@
+.skeleton {
+  border-radius: var(--radius-sm);
+  background-color: var(--color-skeleton);
+  background-image: linear-gradient(
+    90deg,
+    transparent 0%,
+    var(--color-skeleton-shine) 50%,
+    transparent 100%
+  );
+  background-repeat: no-repeat;
+  background-size: 200% 100%;
+  color: transparent;
+  user-select: none;
+  /*
+   * 1) Invisible for the first 300 ms: fast responses never flash a skeleton,
+   *    but the space is already reserved so nothing moves either way.
+   * 2) Slow, low-contrast shimmer: signals "working" without pulling focus.
+   */
+  animation:
+    skeleton-in var(--duration-base) var(--ease-out) 300ms both,
+    shimmer var(--duration-shimmer) var(--ease-in-out) 300ms infinite;
+}
+
+.text {
+  display: inline;
+  /* Each line wrap gets its own rounded box */
+  -webkit-box-decoration-break: clone;
+  box-decoration-break: clone;
+}
+
+.block {
+  display: block;
+}
+
+.skeleton[data-radius='md'] {
+  border-radius: var(--radius-md);
+}
+
+.skeleton[data-radius='lg'] {
+  border-radius: var(--radius-lg);
+}
+
+.skeleton[data-radius='full'] {
+  border-radius: var(--radius-full);
+}
+
+@keyframes skeleton-in {
+  from {
+    opacity: 0;
+  }
+}
+
+@keyframes shimmer {
+  from {
+    background-position: 150% 0;
+  }
+  to {
+    background-position: -50% 0;
+  }
+}
+
+/* Reduced motion: static placeholder, no sweep (global rule also caps it) */
+@media (prefers-reduced-motion: reduce) {
+  .skeleton {
+    background-image: none;
+    animation: none;
+  }
+}
+
+/* Forced colors: backgrounds are dropped, keep a visible outline instead */
+@media (forced-colors: active) {
+  .skeleton {
+    outline: 1px solid GrayText;
+  }
+}
