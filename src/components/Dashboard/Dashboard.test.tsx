@@ -201,4 +201,37 @@ describe('Dashboard', () => {
     act(() => onlineManager.setOnline(true))
     expect(await screen.findByText(/Conexión restablecida/)).toBeInTheDocument()
   })
+
+  it('explains the wait when loading takes unusually long', async () => {
+    vi.useFakeTimers({ shouldAdvanceTime: true })
+    fakeTraccar({ 'GET /api/devices': () => new Promise(() => {}) })
+    renderWithProviders(<Dashboard user={user} />)
+
+    const card = await screen.findByRole('region', { name: 'Vehículo' })
+    expect(card).toHaveTextContent('Cargando datos del vehículo…')
+
+    act(() => vi.advanceTimersByTime(5000))
+    expect(card).toHaveTextContent('Está tardando más de lo habitual')
+    expect(screen.getByText('Está tardando más de lo habitual')).toBeInTheDocument()
+    vi.useRealTimers()
+  })
+
+  it('offers logout as a way out when the vehicle list fails', async () => {
+    const { fetchMock } = fakeTraccar({
+      'GET /api/devices': networkDown,
+      'DELETE /api/session': () => new Response(null, { status: 204 }),
+    })
+    renderWithProviders(<Dashboard user={user} />)
+
+    await screen.findByRole('alert')
+    const panel = screen.getByRole('complementary', { name: 'Estado del vehículo' })
+    const [panelLogout] = [...panel.querySelectorAll('button')].filter((b) =>
+      b.textContent?.includes('Cerrar sesión'),
+    )
+    await userEvent.click(panelLogout)
+    expect(fetchMock).toHaveBeenCalledWith(
+      expect.objectContaining({ pathname: '/api/session' }),
+      expect.objectContaining({ method: 'DELETE' }),
+    )
+  })
 })

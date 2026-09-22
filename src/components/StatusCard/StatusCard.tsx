@@ -18,6 +18,8 @@ interface StatusCardProps {
   retrying?: boolean
   /** Last poll failed or is paused: values are the last known ones */
   isStale?: boolean
+  /** Loading has taken unusually long */
+  slow?: boolean
 }
 
 /**
@@ -32,6 +34,7 @@ export function StatusCard({
   onRetry,
   retrying,
   isStale = false,
+  slow = false,
 }: StatusCardProps) {
   const headingId = useId()
   const loading = isLoading || device === null
@@ -92,7 +95,11 @@ export function StatusCard({
 
       {/* Announced once when loading starts; empty (silent) otherwise */}
       <p className="sr-only" role="status">
-        {loading ? `Cargando datos${device ? ` de ${device.name}` : ' del vehículo'}…` : ''}
+        {!loading
+          ? ''
+          : slow
+            ? 'Está tardando más de lo habitual. Seguimos intentándolo…'
+            : `Cargando datos${device ? ` de ${device.name}` : ' del vehículo'}…`}
       </p>
 
       {body}

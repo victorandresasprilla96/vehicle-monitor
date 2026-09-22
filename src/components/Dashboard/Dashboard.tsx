@@ -4,6 +4,7 @@ import { useDevices } from '../../hooks/useDevices'
 import { useOnlineStatus } from '../../hooks/useOnlineStatus'
 import { usePosition } from '../../hooks/usePosition'
 import { useSelectedDevice } from '../../hooks/useSelectedDevice'
+import { useSlowFlag } from '../../hooks/useSlowFlag'
 import { useLogout } from '../../hooks/useSession'
 import { AppShell } from '../AppShell/AppShell'
 import { Button } from '../Button/Button'
@@ -58,6 +59,12 @@ export function Dashboard({ user }: { user: User }) {
       ? 'unstable'
       : 'ok'
 
+  const positionLoading = positionQuery.isPending && positionQuery.fetchStatus !== 'idle'
+  const mapLoading =
+    devicesQuery.isPending || (selectedDevice !== null && positionQuery.data === undefined)
+  // Retries of a failing first load can keep the skeleton up for 7 s+: explain the wait.
+  const slow = useSlowFlag(devicesQuery.isPending || positionLoading)
+
   const actions = (
     <>
       <span className={styles.user}>{user.name}</span>
@@ -78,7 +85,7 @@ export function Dashboard({ user }: { user: User }) {
     panel = (
       <>
         <DeviceSelectorSkeleton />
-        <StatusCard device={null} position={undefined} isLoading />
+        <StatusCard device={null} position={undefined} isLoading slow={slow} />
       </>
     )
   } else if (devicesQuery.isError && !devices) {
@@ -89,6 +96,8 @@ export function Dashboard({ user }: { user: User }) {
         context="la lista de vehículos"
         onRetry={() => devicesQuery.refetch()}
         retrying={devicesQuery.isFetching}
+        // A way out if the problem is the account/server, not a blip
+        secondaryAction={{ label: 'Cerrar sesión', onClick: () => logout.mutate() }}
       />
     )
   } else if (devices && devices.length === 0) {
@@ -113,7 +122,8 @@ export function Dashboard({ user }: { user: User }) {
           <StatusCard
             device={selectedDevice}
             position={positionQuery.data}
-            isLoading={positionQuery.isPending && positionQuery.fetchStatus !== 'idle'}
+            isLoading={positionLoading}
+            slow={slow}
             error={positionQuery.error}
             onRetry={() => positionQuery.refetch()}
             retrying={positionQuery.isFetching}
@@ -126,9 +136,6 @@ export function Dashboard({ user }: { user: User }) {
     )
   }
 
-  const mapLoading =
-    devicesQuery.isPending || (selectedDevice !== null && positionQuery.data === undefined)
-
   return (
     <AppShell
       actions={actions}
@@ -136,7 +143,7 @@ export function Dashboard({ user }: { user: User }) {
       map={
         <>
           {mapLoading ? (
-            <MapSkeleton />
+            <MapSkeleton slow={slow} />
           ) : (
             <div className={styles.mapPlaceholder}>
               <p className="sr-only">El mapa se mostrará en la siguiente fase.</p>
