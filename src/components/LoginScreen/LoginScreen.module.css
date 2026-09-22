@@ -1,0 +1,220 @@
+.screen {
+  display: flex;
+  flex-direction: column;
+  min-height: 100dvh;
+  background-color: var(--color-bg);
+  /* Faint dot grid echoes the map canvas the operator is about to see */
+  background-image: radial-gradient(var(--color-border) 1px, transparent 1px);
+  background-size: var(--space-6) var(--space-6);
+}
+
+.topBar {
+  display: flex;
+  justify-content: flex-end;
+  padding: var(--space-2) max(var(--space-4), env(safe-area-inset-right)) 0 var(--space-4);
+}
+
+.main {
+  display: grid;
+  flex: 1;
+  place-items: center;
+  padding: var(--space-4) var(--space-4) var(--space-16);
+}
+
+.card {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-5);
+  width: 100%;
+  max-width: 25rem;
+  padding: var(--space-8);
+  border: var(--border-width) solid var(--color-border);
+  border-radius: var(--radius-xl);
+  background-color: var(--color-surface);
+  box-shadow: var(--shadow-3);
+}
+
+@media (max-width: 30rem) {
+  .card {
+    padding: var(--space-6) var(--space-5);
+  }
+}
+
+.header {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+}
+
+.title {
+  margin-top: var(--space-3);
+  font-size: var(--font-size-2xl);
+  font-weight: var(--font-weight-semibold);
+  letter-spacing: var(--letter-spacing-tight);
+}
+
+.subtitle {
+  color: var(--color-text-muted);
+  font-size: var(--font-size-sm);
+}
+
+/* ---------- Messages ---------- */
+.notice,
+.formError {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+  padding: var(--space-3) var(--space-4);
+  border-radius: var(--radius-md);
+  font-size: var(--font-size-sm);
+}
+
+.notice {
+  border-left: 3px solid var(--color-accent);
+  background-color: var(--color-accent-soft);
+  color: var(--color-text);
+}
+
+.notice[data-tone='expired'] {
+  border-left-color: var(--color-warning);
+  background-color: var(--color-warning-soft);
+}
+
+.formError {
+  border-left: 3px solid var(--color-danger);
+  background-color: var(--color-danger-soft);
+  color: var(--color-text);
+  animation: enter var(--duration-base) var(--ease-out);
+}
+
+.formErrorTitle {
+  color: var(--color-danger);
+  font-weight: var(--font-weight-semibold);
+}
+
+/* ---------- Form ---------- */
+.form {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+}
+
+.field {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1-5);
+}
+
+.label {
+  font-size: var(--font-size-sm);
+  font-weight: var(--font-weight-medium);
+}
+
+.input {
+  width: 100%;
+  min-height: var(--tap-target-min);
+  padding: 0 var(--space-3);
+  border: var(--border-width) solid var(--color-border-strong);
+  border-radius: var(--radius-md);
+  background-color: var(--color-surface);
+  font-size: var(--font-size-md); /* ≥16px: prevents iOS zoom on focus */
+  transition:
+    border-color var(--duration-fast) var(--ease-standard),
+    box-shadow var(--duration-fast) var(--ease-standard);
+}
+
+.input:hover {
+  border-color: var(--color-text-muted);
+}
+
+/* Inputs get a ring on any focus (mouse too): it's where the caret is */
+.input:focus {
+  border-color: var(--color-focus);
+  outline: var(--focus-ring-width) solid var(--color-focus);
+  outline-offset: 0;
+}
+
+.input[aria-invalid='true'] {
+  border-color: var(--color-danger);
+}
+
+.input[aria-invalid='true']:focus {
+  outline-color: var(--color-danger);
+}
+
+.fieldError {
+  display: flex;
+  align-items: center;
+  gap: var(--space-1);
+  color: var(--color-danger);
+  font-size: var(--font-size-xs);
+  font-weight: var(--font-weight-medium);
+}
+
+.fieldError::before {
+  content: '';
+  width: 0.375rem;
+  height: 0.375rem;
+  border-radius: var(--radius-full);
+  background-color: currentColor;
+}
+
+.passwordWrap {
+  position: relative;
+}
+
+.passwordWrap .input {
+  padding-right: calc(var(--tap-target-min) + var(--space-1));
+}
+
+.reveal {
+  position: absolute;
+  top: 50%;
+  right: var(--space-0-5);
+  display: grid;
+  place-items: center;
+  width: calc(var(--tap-target-min) - var(--space-1));
+  height: calc(var(--tap-target-min) - var(--space-1));
+  border: none;
+  border-radius: var(--radius-sm);
+  background: transparent;
+  color: var(--color-text-muted);
+  transform: translateY(-50%);
+}
+
+.reveal:hover {
+  background-color: var(--color-surface-sunken);
+  color: var(--color-text);
+}
+
+.reveal:focus-visible {
+  outline-offset: -2px;
+}
+
+.submit {
+  margin-top: var(--space-2);
+}
+
+/* ---------- Footer ---------- */
+.server {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-2);
+  padding-top: var(--space-4);
+  border-top: var(--border-width) solid var(--color-border);
+  color: var(--color-text-muted);
+  font-size: var(--font-size-xs);
+}
+
+.serverHost {
+  font-family: var(--font-mono);
+  color: var(--color-text);
+}
+
+@keyframes enter {
+  from {
+    opacity: 0;
+    transform: translateY(calc(var(--space-1) * -1));
+  }
+}

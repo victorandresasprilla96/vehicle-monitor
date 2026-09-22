@@ -1,23 +1,28 @@
-import { AppShell } from './components/AppShell/AppShell'
+import { Dashboard } from './components/Dashboard/Dashboard'
+import { ErrorState } from './components/ErrorState/ErrorState'
+import { LoginScreen } from './components/LoginScreen/LoginScreen'
+import { SplashScreen } from './components/SplashScreen/SplashScreen'
+import { useSession, useSessionNotice } from './hooks/useSession'
 import styles from './App.module.css'
 
-// Placeholders until the selector, status card and map are built.
 export default function App() {
-  return (
-    <AppShell
-      panel={
-        <div className={styles.placeholder}>
-          <h2 className={styles.placeholderTitle}>Selecciona un vehículo</h2>
-          <p className={styles.placeholderText}>
-            Aquí aparecerán el selector de vehículos y su tarjeta de estado en tiempo real.
-          </p>
-        </div>
-      }
-      map={
-        <div className={styles.mapPlaceholder}>
-          <p className="sr-only">El mapa se mostrará al seleccionar un vehículo.</p>
-        </div>
-      }
-    />
-  )
+  const session = useSession()
+  const notice = useSessionNotice()
+
+  if (session.isPending) return <SplashScreen />
+
+  // Couldn't even check the session (server down / CORS): the login form would fail too.
+  if (session.isError) {
+    return (
+      <main className={styles.fullscreen}>
+        <ErrorState
+          error={session.error}
+          onRetry={() => session.refetch()}
+          retrying={session.isFetching}
+        />
+      </main>
+    )
+  }
+
+  return session.data ? <Dashboard user={session.data} /> : <LoginScreen notice={notice} />
 }
