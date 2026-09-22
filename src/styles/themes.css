@@ -1,0 +1,112 @@
+/*
+ * Semantic color tokens. Both themes define exactly the same names.
+ * Contrast pairs are verified in src/styles/contrast.test.ts (WCAG 2.1 AA).
+ *
+ * The theme is set on <html data-theme> by the inline script in index.html
+ * (before first paint) and then kept in sync by useTheme().
+ */
+
+:root,
+[data-theme='light'] {
+  color-scheme: light;
+
+  /* Surfaces */
+  --color-bg: #f3f5f8;
+  --color-surface: #ffffff;
+  --color-surface-raised: #ffffff;
+  --color-surface-sunken: #eaedf2;
+  --color-overlay: rgb(15 23 32 / 0.48);
+
+  /* Borders */
+  --color-border: #dbe0e7; /* decorative dividers */
+  --color-border-strong: #778394; /* interactive control outlines (≥3:1) */
+
+  /* Text */
+  --color-text: #0f1720;
+  --color-text-muted: #475263;
+  --color-text-subtle: #5b6778;
+  --color-text-inverse: #ffffff;
+
+  /* Accent / interactive */
+  --color-accent: #0b5fcc;
+  --color-accent-hover: #094ea8;
+  --color-accent-soft: #e5effc;
+  --color-on-accent: #ffffff;
+  --color-focus: #0b5fcc;
+
+  /* Status */
+  --color-online: #0b7a43;
+  --color-online-soft: #e2f4ea;
+  --color-offline: #5b6778;
+  --color-offline-soft: #eaedf2;
+  --color-unknown: #8a5a00;
+  --color-unknown-soft: #fdf1da;
+  --color-danger: #c0262d;
+  --color-danger-soft: #fdeaea;
+  --color-warning: #8a5a00;
+  --color-warning-soft: #fdf1da;
+
+  /* Value-change highlight */
+  --color-highlight: #fff2b8;
+
+  /* Skeleton */
+  --color-skeleton: #e3e7ed;
+  --color-skeleton-shine: #f3f5f8;
+
+  /* Shadows */
+  --shadow-1: 0 1px 2px rgb(15 23 32 / 0.06), 0 1px 1px rgb(15 23 32 / 0.04);
+  --shadow-2: 0 4px 12px rgb(15 23 32 / 0.08), 0 1px 3px rgb(15 23 32 / 0.06);
+  --shadow-3: 0 16px 40px rgb(15 23 32 / 0.14), 0 4px 12px rgb(15 23 32 / 0.08);
+}
+
+[data-theme='dark'] {
+  color-scheme: dark;
+
+  /* Surfaces — deep blue-grey, never pure black (less halation on long shifts) */
+  --color-bg: #0a0e13;
+  --color-surface: #11171f;
+  --color-surface-raised: #18202b;
+  --color-surface-sunken: #070a0e;
+  --color-overlay: rgb(0 0 0 / 0.6);
+
+  /* Borders */
+  --color-border: #232d3a;
+  --color-border-strong: #6b7889;
+
+  /* Text — off-white, not #fff, to reduce glare */
+  --color-text: #e7ecf2;
+  --color-text-muted: #a6b1bf;
+  --color-text-subtle: #8f9bab;
+  --color-text-inverse: #0a0e13;
+
+  /* Accent / interactive */
+  --color-accent: #5aa9ff;
+  --color-accent-hover: #82bdff;
+  --color-accent-soft: #10243d;
+  --color-on-accent: #04121f;
+  --color-focus: #8cc8ff;
+
+  /* Status */
+  --color-online: #3dd68c;
+  --color-online-soft: #0e2a1d;
+  --color-offline: #8f9bab;
+  --color-offline-soft: #1a212b;
+  --color-unknown: #f2b54a;
+  --color-unknown-soft: #2e2310;
+  --color-danger: #ff6b6b;
+  --color-danger-soft: #3a1417;
+  --color-warning: #f2b54a;
+  --color-warning-soft: #2e2310;
+
+  /* Value-change highlight */
+  --color-highlight: #3a3312;
+
+  /* Skeleton */
+  --color-skeleton: #1a222d;
+  --color-skeleton-shine: #232d3a;
+
+  /* Shadows — darker, plus a hairline top highlight to separate layers */
+  --shadow-1: 0 1px 2px rgb(0 0 0 / 0.4);
+  --shadow-2: 0 4px 12px rgb(0 0 0 / 0.45), inset 0 1px 0 rgb(255 255 255 / 0.03);
+  --shadow-3: 0 16px 40px rgb(0 0 0 / 0.6), inset 0 1px 0 rgb(255 255 255 / 0.04);
+}
