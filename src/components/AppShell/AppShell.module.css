@@ -1,0 +1,112 @@
+.shell {
+  display: grid;
+  grid-template-rows: var(--header-height) minmax(0, 1fr);
+  height: 100%;
+  min-height: 100dvh;
+}
+
+/* ---------- Header ---------- */
+.header {
+  position: relative;
+  z-index: var(--z-header);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-4);
+  padding: 0 max(var(--space-4), env(safe-area-inset-right)) 0
+    max(var(--space-4), env(safe-area-inset-left));
+  border-bottom: var(--border-width) solid var(--color-border);
+  background-color: var(--color-surface);
+}
+
+.brand {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  min-width: 0;
+}
+
+.mark {
+  flex-shrink: 0;
+}
+
+.title {
+  display: flex;
+  flex-direction: column;
+  font-size: var(--font-size-md);
+  font-weight: var(--font-weight-semibold);
+  letter-spacing: var(--letter-spacing-tight);
+  line-height: var(--line-height-tight);
+}
+
+.subtitle {
+  margin-top: var(--space-0-5);
+  color: var(--color-text-muted);
+  font-size: var(--font-size-xs);
+  font-weight: var(--font-weight-regular);
+  letter-spacing: var(--letter-spacing-normal);
+}
+
+.actions {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+}
+
+/* ---------- Main: panel + map ---------- */
+.main {
+  display: grid;
+  grid-template-columns: var(--panel-width) minmax(0, 1fr);
+  min-height: 0;
+}
+
+.panel {
+  position: relative;
+  z-index: var(--z-panel);
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+  padding: var(--space-4);
+  overflow-y: auto;
+  border-right: var(--border-width) solid var(--color-border);
+  background-color: var(--color-bg);
+}
+
+/* Programmatic focus target of the skip link: no ring on the whole panel */
+.panel:focus {
+  outline: none;
+}
+
+.map {
+  position: relative;
+  z-index: var(--z-map);
+  min-height: 0;
+  background-color: var(--color-surface-sunken);
+}
+
+/* Tablet/mobile: map on top, panel below (refined in the responsive phase) */
+@media (max-width: 64rem) {
+  .main {
+    grid-template-columns: minmax(0, 1fr);
+    grid-template-rows: minmax(18rem, 45dvh) auto;
+    overflow-y: auto;
+  }
+
+  .panel {
+    order: 2;
+    overflow-y: visible;
+    border-right: none;
+    border-top: var(--border-width) solid var(--color-border);
+    padding-bottom: max(var(--space-4), env(safe-area-inset-bottom));
+  }
+
+  .map {
+    order: 1;
+  }
+}
+
+@media (max-width: 40rem) {
+  .subtitle {
+    display: none;
+  }
+}

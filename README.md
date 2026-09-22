@@ -77,3 +77,17 @@ Una cuenta nueva no tiene dispositivos. Para ver el vehículo moverse:
    ```
 
    Recorre en bucle Sol → Gran Vía → Plaza de España → Palacio Real, con velocidad variable (20–50 km/h), rumbo real y batería descendente. `TRACCAR_OSMAND_URL` permite apuntar a otro servidor.
+
+## Sistema de diseño
+
+Todos los estilos consumen *design tokens* definidos como CSS Custom Properties en [`src/styles/`](src/styles):
+
+| Fichero | Contenido |
+|---|---|
+| [`tokens.css`](src/styles/tokens.css) | Escalas independientes del tema: tipografía, espaciado (base 4 px), radios, motion, layout, z-index |
+| [`themes.css`](src/styles/themes.css) | Paleta semántica (`--color-*`) y sombras para `light` y `dark`, con los mismos nombres en ambos |
+| [`global.css`](src/styles/global.css) | Reset, foco visible (`:focus-visible`), skip link, utilidades y `prefers-reduced-motion` |
+
+- **Contraste verificado por test:** [`contrast.test.ts`](src/styles/contrast.test.ts) analiza `themes.css` y comprueba con la fórmula WCAG 2.1 cada par texto/fondo (≥ 4.5:1) y controles/foco (≥ 3:1) en ambos temas. Un cambio de color que rompa AA hace fallar los tests.
+- **Tema:** respeta `prefers-color-scheme` hasta que el usuario elige uno, y entonces lo persiste en `localStorage`. Un script inline en `index.html` lo aplica antes del primer pintado (sin destellos) y los colores hacen un *cross-fade* solo durante el cambio.
+- **Tipografía:** Inter (UI) y JetBrains Mono (datos), autoalojadas con `@fontsource` (sin peticiones a terceros), con cifras tabulares para valores en tiempo real.
