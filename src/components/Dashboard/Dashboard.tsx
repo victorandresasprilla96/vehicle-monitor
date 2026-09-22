@@ -1,4 +1,4 @@
-import { useEffect } from 'react'
+import { lazy, Suspense, useEffect, useState } from 'react'
 import type { User } from '../../api/types'
 import { useDevices } from '../../hooks/useDevices'
 import { useOnlineStatus } from '../../hooks/useOnlineStatus'
@@ -14,6 +14,9 @@ import { ErrorState } from '../ErrorState/ErrorState'
 import { MapSkeleton } from '../MapSkeleton/MapSkeleton'
 import { StatusCard } from '../StatusCard/StatusCard'
 import styles from './Dashboard.module.css'
+
+// Leaflet (~150 kB) is only downloaded once there is something to put on a map.
+const VehicleMap = lazy(() => import('../VehicleMap/VehicleMap'))
 
 /**
  * Has data on screen, but the latest refresh failed or is paused (offline).
@@ -58,6 +61,11 @@ export function Dashboard({ user }: { user: User }) {
     : positionStale || isStale(devicesQuery)
       ? 'unstable'
       : 'ok'
+
+  // Mount the map with the first answer about a vehicle, then keep it mounted
+  // across vehicle switches (no tile reload; the camera just jumps).
+  const [mapMounted, setMapMounted] = useState(false)
+  if (!mapMounted && selectedDevice && positionQuery.data !== undefined) setMapMounted(true)
 
   const positionLoading = positionQuery.isPending && positionQuery.fetchStatus !== 'idle'
   const mapLoading =
@@ -142,11 +150,23 @@ export function Dashboard({ user }: { user: User }) {
       panel={panel}
       map={
         <>
-          {mapLoading ? (
+          {selectedDevice && mapMounted ? (
+            <Suspense fallback={<MapSkeleton />}>
+              <VehicleMap
+                device={selectedDevice}
+                position={positionQuery.data}
+                stale={positionStale}
+              />
+            </Suspense>
+          ) : mapLoading ? (
             <MapSkeleton slow={slow} />
           ) : (
             <div className={styles.mapPlaceholder}>
-              <p className="sr-only">El mapa se mostrará en la siguiente fase.</p>
+              <p className={styles.mapHint}>
+                {devices && devices.length > 0
+                  ? 'Selecciona un vehículo para verlo en el mapa.'
+                  : 'No hay vehículos que mostrar en el mapa.'}
+              </p>
             </div>
           )}
           <ConnectionBanner state={connection} />

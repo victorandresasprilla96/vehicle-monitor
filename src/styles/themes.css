@@ -53,6 +53,9 @@
   --color-skeleton: #e3e7ed;
   --color-skeleton-shine: #f3f5f8;
 
+  /* Map basemap: desaturated so the vehicle marker carries the colour */
+  --map-tile-filter: grayscale(0.8) contrast(0.78) brightness(1.08);
+
   /* Shadows */
   --shadow-1: 0 1px 2px rgb(15 23 32 / 0.06), 0 1px 1px rgb(15 23 32 / 0.04);
   --shadow-2: 0 4px 12px rgb(15 23 32 / 0.08), 0 1px 3px rgb(15 23 32 / 0.06);
@@ -104,6 +107,9 @@
   /* Skeleton */
   --color-skeleton: #1a222d;
   --color-skeleton-shine: #232d3a;
+
+  /* Map basemap: inverted light tiles, hue restored, dimmed to match the UI */
+  --map-tile-filter: invert(1) hue-rotate(180deg) grayscale(0.7) brightness(0.7) contrast(0.85);
 
   /* Shadows — darker, plus a hairline top highlight to separate layers */
   --shadow-1: 0 1px 2px rgb(0 0 0 / 0.4);

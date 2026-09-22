@@ -13,3 +13,15 @@ if (typeof window !== 'undefined' && !window.matchMedia) {
     dispatchEvent: () => false,
   })
 }
+
+// Leaflet needs real layout (container size, tiles). Component tests use this
+// light double; the real map is covered by markerAnimator tests + browser E2E.
+vi.mock('./components/VehicleMap/VehicleMap', () => ({
+  default: ({ device, position }: { device: { name: string }; position: unknown }) => (
+    <div
+      data-testid="vehicle-map"
+      data-device={device.name}
+      data-has-position={String(!!position)}
+    />
+  ),
+}))
