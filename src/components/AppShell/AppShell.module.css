@@ -49,22 +49,29 @@
   gap: var(--space-2);
 }
 
-/* ---------- Main: panel + map ---------- */
+/* ---------- Main: panel + map ----------
+ * Mobile-first: map on top (bounded height), panel below, one scroll.
+ * Side by side on wide screens and on short landscape screens (see
+ * SIDE_BY_SIDE_QUERY in useMediaQuery.ts — keep both queries identical).
+ */
 .main {
   display: grid;
-  grid-template-columns: var(--panel-width) minmax(0, 1fr);
+  grid-template-columns: minmax(0, 1fr);
+  grid-template-rows: clamp(15rem, 36dvh, 28rem) auto;
   min-height: 0;
+  overflow-y: auto;
 }
 
 .panel {
   position: relative;
   z-index: var(--z-panel);
+  order: 2;
   display: flex;
   flex-direction: column;
   gap: var(--space-4);
-  padding: var(--space-4);
-  overflow-y: auto;
-  border-right: var(--border-width) solid var(--color-border);
+  padding: var(--space-4) max(var(--space-4), env(safe-area-inset-right))
+    max(var(--space-4), env(safe-area-inset-bottom)) max(var(--space-4), env(safe-area-inset-left));
+  border-top: var(--border-width) solid var(--color-border);
   background-color: var(--color-bg);
 }
 
@@ -76,33 +83,103 @@
 .map {
   position: relative;
   z-index: var(--z-map);
+  order: 1;
   min-height: 0;
   background-color: var(--color-surface-sunken);
 }
 
-/* Tablet/mobile: map on top, panel below (refined in the responsive phase) */
-@media (max-width: 64rem) {
+@media (min-width: 60rem), (orientation: landscape) and (min-width: 40rem) and (max-height: 32rem) {
   .main {
-    grid-template-columns: minmax(0, 1fr);
-    grid-template-rows: minmax(18rem, 45dvh) auto;
-    overflow-y: auto;
+    /* Fluid panel: 280 px on a small tablet / zoomed window, 380 px on desktop */
+    --panel-width: clamp(17.5rem, 30vw, 23.75rem);
+
+    grid-template-columns: var(--panel-width) minmax(0, 1fr);
+    grid-template-rows: minmax(0, 1fr);
+    overflow: hidden;
   }
 
   .panel {
-    order: 2;
-    overflow-y: visible;
-    border-right: none;
-    border-top: var(--border-width) solid var(--color-border);
-    padding-bottom: max(var(--space-4), env(safe-area-inset-bottom));
+    order: 0;
+    overflow-y: auto;
+    padding: var(--space-4);
+    padding-left: max(var(--space-4), env(safe-area-inset-left));
+    border-top: none;
+    border-right: var(--border-width) solid var(--color-border);
   }
 
   .map {
-    order: 1;
+    order: 0;
+  }
+
+  /* Collapsed panel (removed via `hidden`): a single full-width map column.
+     A "0 1fr" template would auto-place the map into the 0-width column. */
+  .main[data-collapsed] {
+    grid-template-columns: minmax(0, 1fr);
   }
 }
 
+/* Short landscape (phone on its side): tighter panel spacing */
+@media (orientation: landscape) and (max-height: 32rem) {
+  .panel {
+    gap: var(--space-3);
+    padding-block: var(--space-3);
+  }
+}
+
+/* ---------- Panel toggle (only rendered in side-by-side layouts) ---------- */
+.panelToggle {
+  position: absolute;
+  top: var(--space-4);
+  left: var(--space-4);
+  z-index: var(--z-overlay);
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+  min-height: 2.5rem;
+  padding: 0 var(--space-3);
+  border: var(--border-width) solid var(--color-border-strong);
+  border-radius: var(--radius-md);
+  background-color: var(--color-surface-raised);
+  box-shadow: var(--shadow-2);
+  color: var(--color-text);
+  font-size: var(--font-size-sm);
+  font-weight: var(--font-weight-medium);
+}
+
+.panelToggle:hover {
+  border-color: var(--color-text-muted);
+}
+
+.panelToggle svg {
+  transition: transform var(--duration-base) var(--ease-standard);
+}
+
+.panelToggle[aria-expanded='false'] svg {
+  transform: rotate(180deg);
+}
+
+/* ---------- Small screens: header must fit 320 px (WCAG 1.4.10 reflow) ---------- */
 @media (max-width: 40rem) {
   .subtitle {
     display: none;
+  }
+}
+
+@media (max-width: 24rem) {
+  .header {
+    gap: var(--space-2);
+    padding-inline: var(--space-3);
+  }
+
+  .brand {
+    gap: var(--space-2);
+  }
+
+  .title {
+    font-size: var(--font-size-sm);
+  }
+
+  .actions {
+    gap: 0;
   }
 }

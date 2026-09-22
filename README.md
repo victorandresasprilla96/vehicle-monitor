@@ -110,6 +110,19 @@ Criterio: **guiar la mirada sin distraer**. Con polling cada 5 s, animar todo se
 
 El realce es un pseudo-elemento detrás del texto (sin impacto en el layout) y se reinicia cambiando la `key` del elemento, sin temporizadores. Con `prefers-reduced-motion` no hay animaciones.
 
+## Diseño adaptable
+
+| Pantalla | Distribución |
+|---|---|
+| Móvil (vertical) | Mapa arriba (36 % de la altura, entre 240 y 448 px) y panel debajo, con un solo scroll. Desplegable nativo para elegir vehículo. |
+| Móvil horizontal, ventana con zoom 200 % | Panel al lado del mapa (regla de "horizontal y baja altura"), para que los datos no queden fuera de la pantalla. |
+| Tablet horizontal y escritorio (≥ 960 px) | Panel lateral fluido (280–380 px) y mapa. El panel se puede **plegar** para ver el mapa completo (botón con `aria-expanded`, el mapa conserva el centro). |
+| Flota pequeña (≤ 6) con panel lateral | **Lista de vehículos** con el estado de cada uno a la vista (radios nativos en un `fieldset`, operable con flechas). |
+
+- **Reflow (WCAG 1.4.10)**: sin scroll horizontal a 320 px. La cabecera se compacta y "Cerrar sesión" pasa a ser un icono que conserva su nombre accesible.
+- Verificado en 8 tamaños (320, 390, 844×390, 768, 1024, 1280, 1280 al 200 % y 1920): sin desbordamiento horizontal y con la velocidad visible sin hacer scroll en todos.
+- El skeleton de la lista recuerda el número de vehículos de la última sesión, así que la carga no mueve el layout (CLS = 0).
+
 ## Datos en tiempo real (simulador)
 
 Una cuenta nueva no tiene dispositivos. Para ver el vehículo moverse:

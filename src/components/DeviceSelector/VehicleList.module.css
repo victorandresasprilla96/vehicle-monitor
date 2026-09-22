@@ -1,0 +1,139 @@
+.wrap {
+  position: relative;
+}
+
+.list {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1-5);
+  min-width: 0;
+  margin: 0;
+  padding: 0;
+  border: none;
+}
+
+.skeletonList {
+  gap: 0;
+}
+
+.legend {
+  display: block;
+  margin-bottom: var(--space-1-5);
+  padding: 0;
+  font-size: var(--font-size-sm);
+  font-weight: var(--font-weight-medium);
+}
+
+.hint {
+  color: var(--color-text-muted);
+  line-height: var(--line-height-normal);
+  font-size: var(--font-size-xs);
+  font-variant-numeric: tabular-nums;
+}
+
+/* Counter aligned with the legend (the legend itself must stay a direct child) */
+.hint[data-floating] {
+  position: absolute;
+  top: 0;
+  right: 0;
+}
+
+.options {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1-5);
+}
+
+.option {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  min-height: var(--tap-target-min);
+  padding: var(--space-2) var(--space-3);
+  border: var(--border-width) solid var(--color-border-strong);
+  border-radius: var(--radius-md);
+  background-color: var(--color-surface);
+  cursor: pointer;
+  transition:
+    border-color var(--duration-fast) var(--ease-standard),
+    background-color var(--duration-fast) var(--ease-standard);
+}
+
+.option[data-skeleton] {
+  cursor: default;
+}
+
+.option:hover {
+  border-color: var(--color-text-muted);
+}
+
+.option:has(.radio:checked) {
+  border-color: var(--color-accent);
+  background-color: var(--color-accent-soft);
+}
+
+/* The real radio is visually hidden; the whole card shows its focus */
+.radio {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  margin: 0;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  opacity: 0;
+}
+
+.option:has(.radio:focus-visible) {
+  outline: var(--focus-ring-width) solid var(--color-focus);
+  outline-offset: var(--focus-ring-offset);
+}
+
+.text {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  min-width: 0;
+}
+
+.name {
+  overflow: hidden;
+  font-size: var(--font-size-sm);
+  font-weight: var(--font-weight-semibold);
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.status {
+  font-size: var(--font-size-xs);
+  font-weight: var(--font-weight-medium);
+}
+
+.status[data-status='online'] {
+  color: var(--color-online);
+}
+
+.status[data-status='offline'] {
+  color: var(--color-offline);
+}
+
+.status[data-status='unknown'] {
+  color: var(--color-unknown);
+}
+
+.check {
+  flex-shrink: 0;
+  color: var(--color-accent);
+  opacity: 0;
+  transition: opacity var(--duration-fast) var(--ease-standard);
+}
+
+.option:has(.radio:checked) .check {
+  opacity: 1;
+}
+
+@media (forced-colors: active) {
+  .option:has(.radio:checked) {
+    outline: 2px solid Highlight;
+  }
+}

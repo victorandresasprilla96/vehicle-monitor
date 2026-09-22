@@ -151,6 +151,14 @@ function MapBehaviour({ deviceId, target, following, animate, onUserMove }: MapB
     return enableSpaceActivation(el)
   }, [map])
 
+  // The container resizes without a window resize (panel collapsed, layout
+  // breakpoint): tell Leaflet, or it leaves grey untiled areas.
+  useEffect(() => {
+    const observer = new ResizeObserver(() => map.invalidateSize({ animate: false })) // keeps the centre
+    observer.observe(map.getContainer())
+    return () => observer.disconnect()
+  }, [map])
+
   // Dragging or keyboard-panning means the operator is looking elsewhere: stop following.
   useEffect(() => {
     const el = map.getContainer()
