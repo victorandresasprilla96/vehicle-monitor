@@ -9,6 +9,14 @@
   pointer-events: none;
 }
 
+/* Beside the panel, the map shows the panel toggle top-left: sit below it so the
+   two never overlap on narrow maps (same query as SIDE_BY_SIDE_QUERY). */
+@media (min-width: 60rem), (orientation: landscape) and (min-width: 40rem) and (max-height: 32rem) {
+  .region {
+    top: calc(var(--space-4) + 2.5rem + var(--space-2));
+  }
+}
+
 .banner {
   display: flex;
   align-items: center;

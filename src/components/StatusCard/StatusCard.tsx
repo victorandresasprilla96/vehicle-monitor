@@ -118,13 +118,16 @@ function Row({
   label,
   children,
   valueClass,
+  peek,
 }: {
   label: string
   children: ReactNode
   valueClass?: string
+  /** Bottom edge of what the collapsed mobile sheet shows */
+  peek?: boolean
 }) {
   return (
-    <div className={styles.row}>
+    <div className={styles.row} data-sheet-peek={peek || undefined}>
       <dt>{label}</dt>
       <dd className={valueClass}>{children}</dd>
     </div>
@@ -135,7 +138,7 @@ function Row({
 function LoadingRows() {
   return (
     <dl className={styles.data}>
-      <Row label="Velocidad" valueClass={styles.speed}>
+      <Row label="Velocidad" valueClass={styles.speed} peek>
         <Skeleton text="00 km/h" />
       </Row>
       <Row label="Batería">
@@ -169,7 +172,7 @@ function DataRows({ position }: { position: Position }) {
 
   return (
     <dl className={styles.data}>
-      <Row label="Velocidad" valueClass={styles.speed}>
+      <Row label="Velocidad" valueClass={styles.speed} peek>
         <AnimatedValue value={speed} highlightWhen={significantSpeedChange}>
           {speed}
         </AnimatedValue>{' '}

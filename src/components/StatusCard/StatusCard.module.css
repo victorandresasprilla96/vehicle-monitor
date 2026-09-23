@@ -57,9 +57,11 @@
 
 .row {
   display: flex;
+  flex-wrap: wrap; /* 200 % text / very narrow: value drops under its label */
   align-items: baseline;
   justify-content: space-between;
-  gap: var(--space-4);
+  column-gap: var(--space-4);
+  row-gap: var(--space-1);
   padding: var(--space-3) 0;
   border-top: var(--border-width) solid var(--color-border);
   font-variant-numeric: tabular-nums;
@@ -71,9 +73,12 @@
 }
 
 .row dd {
+  min-width: 0;
+  margin-left: auto;
   font-size: var(--font-size-sm);
   font-weight: var(--font-weight-medium);
   text-align: right;
+  overflow-wrap: anywhere;
   transition: color var(--duration-slow) var(--ease-standard);
 }
 

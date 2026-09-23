@@ -1,15 +1,19 @@
-import { lazy, Suspense, useEffect, useState } from 'react'
+import { lazy, Suspense, useEffect, useLayoutEffect, useRef, useState } from 'react'
 import type { User } from '../../api/types'
 import { useDevices } from '../../hooks/useDevices'
+import { SIDE_BY_SIDE_QUERY, useMediaQuery } from '../../hooks/useMediaQuery'
 import { useOnlineStatus } from '../../hooks/useOnlineStatus'
 import { usePosition } from '../../hooks/usePosition'
 import { useSelectedDevice } from '../../hooks/useSelectedDevice'
 import { useSlowFlag } from '../../hooks/useSlowFlag'
 import { useLogout } from '../../hooks/useSession'
+import { readFleetSize, storeFleetSize } from '../../utils/fleetSize'
 import { AppShell } from '../AppShell/AppShell'
 import { Button } from '../Button/Button'
 import { ConnectionBanner, type ConnectionState } from '../ConnectionBanner/ConnectionBanner'
 import { DeviceSelector, DeviceSelectorSkeleton } from '../DeviceSelector/DeviceSelector'
+import { VehicleCombobox } from '../DeviceSelector/VehicleCombobox'
+import { VEHICLE_LIST_MAX, VehicleList, VehicleListSkeleton } from '../DeviceSelector/VehicleList'
 import { ErrorState } from '../ErrorState/ErrorState'
 import { MapSkeleton } from '../MapSkeleton/MapSkeleton'
 import { StatusCard } from '../StatusCard/StatusCard'
@@ -40,6 +44,7 @@ export function Dashboard({ user }: { user: User }) {
   const [selectedId, setSelectedId] = useSelectedDevice()
   const logout = useLogout()
   const online = useOnlineStatus()
+  const sideBySide = useMediaQuery(SIDE_BY_SIDE_QUERY)
 
   const devices = devicesQuery.data
   // A single vehicle is used right away (not one render later via the effect
@@ -47,6 +52,37 @@ export function Dashboard({ user }: { user: User }) {
   const selectedDevice =
     devices?.find((d) => d.id === selectedId) ?? (devices?.length === 1 ? devices[0] : null)
   const positionQuery = usePosition(selectedDevice?.id ?? null)
+
+  // Remember the fleet size for next session's skeleton
+  useEffect(() => {
+    if (devices) storeFleetSize(devices.length)
+  }, [devices])
+  const [cachedFleetSize] = useState(readFleetSize)
+  const showsList = (count: number | null) =>
+    sideBySide && count !== null && count > 0 && count <= VEHICLE_LIST_MAX
+
+  // The picker changes type with the layout (select ↔ list when the phone
+  // rotates). If it had keyboard focus, hand focus to the new control.
+  const pickerRef = useRef<HTMLDivElement>(null)
+  const pickerHadFocus = useRef(false)
+  const pickerKind = !devices
+    ? 'none'
+    : showsList(devices.length)
+      ? 'list'
+      : devices.length > VEHICLE_LIST_MAX
+        ? 'combobox'
+        : 'select'
+  useLayoutEffect(() => {
+    if (!pickerHadFocus.current || !pickerRef.current) return
+    if (pickerRef.current.contains(document.activeElement)) return
+    // querySelector with a selector list returns the first match in *document*
+    // order, so ask for the checked radio explicitly before any fallback.
+    const root = pickerRef.current
+    ;(
+      root.querySelector<HTMLElement>('input[type=radio]:checked') ??
+      root.querySelector<HTMLElement>('select, input[role=combobox], input[type=radio]')
+    )?.focus()
+  }, [pickerKind])
 
   // Keep the URL in sync: record the auto-picked vehicle, drop ids that don't exist.
   useEffect(() => {
@@ -81,8 +117,11 @@ export function Dashboard({ user }: { user: User }) {
         onClick={() => logout.mutate()}
         loading={logout.isPending}
         loadingLabel="Saliendo…"
+        icon={<LogoutIcon />}
+        className={styles.logout}
       >
-        Cerrar sesión
+        {/* Visually hidden on very narrow screens; stays the accessible name */}
+        <span className={styles.logoutLabel}>Cerrar sesión</span>
       </Button>
     </>
   )
@@ -92,7 +131,11 @@ export function Dashboard({ user }: { user: User }) {
     // Final layout from the first frame: selector + card, in skeleton form
     panel = (
       <>
-        <DeviceSelectorSkeleton />
+        {showsList(cachedFleetSize) ? (
+          <VehicleListSkeleton rows={cachedFleetSize!} />
+        ) : (
+          <DeviceSelectorSkeleton />
+        )}
         <StatusCard device={null} position={undefined} isLoading slow={slow} />
       </>
     )
@@ -121,11 +164,39 @@ export function Dashboard({ user }: { user: User }) {
   } else if (devices) {
     panel = (
       <>
-        <DeviceSelector
-          devices={devices}
-          selectedId={selectedDevice?.id ?? null}
-          onChange={setSelectedId}
-        />
+        <div
+          ref={pickerRef}
+          className={styles.picker}
+          onFocus={() => (pickerHadFocus.current = true)}
+          onBlur={(e) => {
+            // Removal of the focused control fires no blur, so "had focus" survives a swap
+            if (!e.currentTarget.contains(e.relatedTarget as Node)) pickerHadFocus.current = false
+          }}
+        >
+          {/* Picker by fleet size and layout:
+            · ≤ 6 beside the map → list (every status visible at a glance)
+            · > 6 anywhere        → searchable combobox
+            · few, stacked/mobile → native select (native picker on touch) */}
+          {showsList(devices.length) ? (
+            <VehicleList
+              devices={devices}
+              selectedId={selectedDevice?.id ?? null}
+              onChange={setSelectedId}
+            />
+          ) : devices.length > VEHICLE_LIST_MAX ? (
+            <VehicleCombobox
+              devices={devices}
+              selectedId={selectedDevice?.id ?? null}
+              onChange={setSelectedId}
+            />
+          ) : (
+            <DeviceSelector
+              devices={devices}
+              selectedId={selectedDevice?.id ?? null}
+              onChange={setSelectedId}
+            />
+          )}
+        </div>
         {selectedDevice ? (
           <StatusCard
             device={selectedDevice}
@@ -173,5 +244,23 @@ export function Dashboard({ user }: { user: User }) {
         </>
       }
     />
+  )
+}
+
+function LogoutIcon() {
+  return (
+    <svg
+      viewBox="0 0 20 20"
+      width="18"
+      height="18"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="1.6"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      aria-hidden="true"
+    >
+      <path d="M8 3.5H5A1.5 1.5 0 0 0 3.5 5v10A1.5 1.5 0 0 0 5 16.5h3M13 13.5 16.5 10 13 6.5M16.5 10H8" />
+    </svg>
   )
 }

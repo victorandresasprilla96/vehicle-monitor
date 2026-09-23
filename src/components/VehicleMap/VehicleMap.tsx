@@ -1,8 +1,9 @@
 import 'leaflet/dist/leaflet.css'
-import { useCallback, useEffect, useRef, useState } from 'react'
+import { useCallback, useEffect, useRef, useState, type CSSProperties } from 'react'
 import { MapContainer, TileLayer, ZoomControl, useMap } from 'react-leaflet'
 import type { Device, Position } from '../../api/types'
 import { useReducedMotion } from '../../hooks/useReducedMotion'
+import { useMapBottomInset } from '../AppShell/layoutContext'
 import { STATUS_LABEL } from '../../utils/status'
 import { courseToCompassLong, knotsToKmh } from '../../utils/units'
 import { MapSkeleton } from '../MapSkeleton/MapSkeleton'
@@ -32,6 +33,11 @@ interface VehicleMapProps {
 export default function VehicleMap({ device, position, stale }: VehicleMapProps) {
   const reducedMotion = useReducedMotion()
   const [tilesReady, setTilesReady] = useState(false)
+  // Height of Leaflet's attribution strip: the follow button sits above it, so
+  // the OSM credit (required by its licence) is never covered — at any text size.
+  // null until measured: CSS falls back to the one-line height, so the button
+  // doesn't jump up when the first measurement arrives (measured as layout shift).
+  const [attributionHeight, setAttributionHeight] = useState<number | null>(null)
   const [following, setFollowing] = useState(true)
   const [followedDevice, setFollowedDevice] = useState(device.id)
   const stopFollowing = useCallback(() => setFollowing(false), [])
@@ -51,7 +57,14 @@ export default function VehicleMap({ device, position, stale }: VehicleMapProps)
   const initial = position ?? { latitude: 40.4168, longitude: -3.7038 }
 
   return (
-    <div className={styles.wrap}>
+    <div
+      className={styles.wrap}
+      style={
+        attributionHeight === null
+          ? undefined
+          : ({ '--attribution-height': `${attributionHeight}px` } as CSSProperties)
+      }
+    >
       {/* First in DOM so Tab order is: follow toggle → map → zoom controls */}
       <button
         type="button"
@@ -61,7 +74,7 @@ export default function VehicleMap({ device, position, stale }: VehicleMapProps)
         onClick={() => setFollowing((f) => !f)}
       >
         <CrosshairIcon />
-        <span>Seguir vehículo</span>
+        <span className={styles.followLabel}>Seguir vehículo</span>
       </button>
 
       <MapContainer
@@ -87,6 +100,7 @@ export default function VehicleMap({ device, position, stale }: VehicleMapProps)
           following={following}
           animate={!reducedMotion}
           onUserMove={stopFollowing}
+          onAttributionResize={setAttributionHeight}
         />
         {position && (
           <VehicleMarker
@@ -123,6 +137,7 @@ function markerLabel(device: Device, position: Position): string {
 }
 
 interface MapBehaviourProps {
+  onAttributionResize: (height: number) => void
   deviceId: number
   target: [number, number] | null
   following: boolean
@@ -131,8 +146,18 @@ interface MapBehaviourProps {
 }
 
 /** Accessible container semantics, follow-the-vehicle camera and "user took over" detection. */
-function MapBehaviour({ deviceId, target, following, animate, onUserMove }: MapBehaviourProps) {
+function MapBehaviour({
+  deviceId,
+  target,
+  following,
+  animate,
+  onUserMove,
+  onAttributionResize,
+}: MapBehaviourProps) {
   const map = useMap()
+  // Part of the map hidden behind the mobile bottom sheet: centre the vehicle
+  // in the *visible* area by shifting the camera down by half of it.
+  const bottomInset = useMapBottomInset()
   const [lat, lng] = target ?? [null, null]
   // Which vehicle the camera last framed; a ref, since it doesn't affect rendering
   const cameraDevice = useRef<number | null>(null)
@@ -151,6 +176,44 @@ function MapBehaviour({ deviceId, target, following, animate, onUserMove }: MapB
     return enableSpaceActivation(el)
   }, [map])
 
+  // Report the attribution strip height (it wraps with large text / narrow maps)
+  useEffect(() => {
+    const attribution = map.getContainer().querySelector('.leaflet-control-attribution')
+    if (!attribution) return
+    const observer = new ResizeObserver(([entry]) =>
+      onAttributionResize(
+        Math.ceil(entry.borderBoxSize?.[0]?.blockSize ?? entry.contentRect.height),
+      ),
+    )
+    observer.observe(attribution)
+    return () => observer.disconnect()
+  }, [map, onAttributionResize])
+
+  // Latest camera inputs, for the resize handler below (it outlives renders)
+  const camera = useRef({ lat, lng, following, bottomInset })
+  useEffect(() => {
+    camera.current = { lat, lng, following, bottomInset }
+  })
+
+  // The container resizes without a window resize (panel collapsed, phone
+  // rotated, layout switch): tell Leaflet, or it leaves grey untiled areas, and
+  // re-frame the vehicle at once — a resize cuts any camera animation short.
+  useEffect(() => {
+    const observer = new ResizeObserver(() => {
+      map.invalidateSize({ animate: false })
+      const c = camera.current
+      if (!c.following || c.lat === null || c.lng === null) return
+      const zoom = map.getZoom()
+      const centre = map.unproject(
+        map.project([c.lat, c.lng], zoom).add([0, c.bottomInset / 2]),
+        zoom,
+      )
+      map.setView(centre, zoom, { animate: false })
+    })
+    observer.observe(map.getContainer())
+    return () => observer.disconnect()
+  }, [map])
+
   // Dragging or keyboard-panning means the operator is looking elsewhere: stop following.
   useEffect(() => {
     const el = map.getContainer()
@@ -166,19 +229,22 @@ function MapBehaviour({ deviceId, target, following, animate, onUserMove }: MapB
   // Camera: jump on vehicle switch, otherwise glide with the marker (same curve & duration).
   useEffect(() => {
     if (lat === null || lng === null || !following) return
-    if (cameraDevice.current !== deviceId) {
-      map.setView([lat, lng], Math.max(map.getZoom(), DEFAULT_ZOOM), { animate: false })
+    const firstFrame = cameraDevice.current !== deviceId
+    const zoom = firstFrame ? Math.max(map.getZoom(), DEFAULT_ZOOM) : map.getZoom()
+    const centre = map.unproject(map.project([lat, lng], zoom).add([0, bottomInset / 2]), zoom)
+    if (firstFrame) {
+      map.setView(centre, zoom, { animate: false })
       cameraDevice.current = deviceId
       return
     }
-    map.panTo([lat, lng], {
+    map.panTo(centre, {
       animate,
       duration: MARKER_ANIMATION_MS / 1000,
       // Leaflet eases with 1 - (1 - t)^(1/easeLinearity): 1/3 → ease-out cubic,
       // exactly the marker's curve, so the vehicle stays centred while both move.
       easeLinearity: 1 / 3,
     })
-  }, [map, lat, lng, following, animate, deviceId])
+  }, [map, lat, lng, following, animate, deviceId, bottomInset])
 
   return null
 }
