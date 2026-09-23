@@ -4,6 +4,16 @@ Monitor de vehículo en tiempo real (Control Room Component) conectado a la API 
 
 Prueba técnica — Design Engineer (UX/UI).
 
+**▶ Demo en producción: https://vehicle-monitor-two.vercel.app**
+
+Inicia sesión con una cuenta de [demo4.traccar.org](https://demo4.traccar.org) (el registro es libre; las credenciales `admin/admin` y `demo/demo` del enunciado ya no funcionan en los servidores demo). Para ver vehículos moviéndose, consulta [Datos en tiempo real](#datos-en-tiempo-real-simulador).
+
+| | |
+|---|---|
+| Accesibilidad | axe-core: 0 violaciones en 21 estados · Lighthouse Accesibilidad **100** · WCAG 2.2 AA |
+| Calidad | Lighthouse Buenas prácticas **100** · SEO **100** · 225 tests |
+| Rendimiento (producción, red real) | FCP **0.3 s** · LCP **1.2 s** · TBT **0 ms** · CLS **0** |
+
 ## Stack
 
 - React 19 + TypeScript + Vite
@@ -32,7 +42,7 @@ npm run dev
 |---|---|
 | `npm run dev` | Servidor de desarrollo con proxy a Traccar |
 | `npm run build` | Type-check + build de producción |
-| `npm run preview` | Sirve el build localmente |
+| `npm run preview` | Sirve el build de producción en local (con el mismo proxy a Traccar) |
 | `npm run lint` | oxlint (incluye accesibilidad `jsx-a11y`) |
 | `npm run test` | Tests con Vitest (`test:watch` en modo watch) |
 | `npm run format` | Prettier sobre `src/` y `scripts/` |
@@ -175,6 +185,39 @@ El realce es un pseudo-elemento detrás del texto (sin impacto en el layout) y s
 3. Tarjeta: cada dato se lee como pareja ("Velocidad, 43 km/h").
 4. Interruptor de tema: "Modo oscuro, interruptor, desactivado".
 5. Con el simulador: "Camión 01 se ha detenido" cuando para.
+
+## Despliegue (Vercel)
+
+El proyecto está enlazado con el repositorio de GitHub: **cada push a `main` despliega a producción** y cada PR genera un despliegue de vista previa.
+
+[`vercel.json`](vercel.json) configura:
+- **Proxy `/api/*` → `https://demo4.traccar.org/api/*`** (rewrite). La cookie `JSESSIONID` queda en el propio dominio de la app, así que no hay CORS ni cookies de terceros. Traccar no permite peticiones de otros orígenes: su respuesta CORS no trae `Access-Control-Allow-Origin` y la cookie no es `SameSite=None`. Por eso **hace falta un proxy**, y GitHub Pages (solo estático) no serviría sin un servicio adicional.
+- **Ruta de la SPA** (`/(.*)` → `index.html`) para los enlaces directos (`?device=123`).
+- **Cabeceras**: `nosniff`, `Referrer-Policy`, `X-Frame-Options: DENY` y `Permissions-Policy`; caché inmutable para `/assets/*` (con hash) y `no-store` para `/api/*`.
+
+Despliegue manual con la CLI: `npx vercel deploy --prod`.
+
+## Rendimiento
+
+| Medición (producción, escritorio) | FCP | LCP | TBT | CLS | Lighthouse |
+|---|---|---|---|---|---|
+| Login | 1.4 s* | 1.4 s* | 0 ms | 0 | 89* |
+| Panel con sesión, red real | **0.3 s** | **1.2 s** | 0 ms | 0 | **97** |
+| Panel con sesión, red simulada por Lighthouse | 1.5 s | 4.7–5.7 s | 0 ms | 0 | 66–68 |
+
+\* Con la red simulada de Lighthouse.
+
+La simulación de Lighthouse penaliza cada petición encadenada. El panel depende de una cadena que no se puede evitar, porque son datos protegidos por login: sesión → vehículos y posición → mapa → teselas. El desglose real del LCP (una tesela) es de ~1.3 s. Optimizaciones aplicadas:
+- **Carga diferida del mapa** (`React.lazy`, 47 kB gzip) que no se descarga en el login, pero se **precarga en cuanto se monta el panel**, en paralelo con la API.
+- La **posición se pide a la vez que la lista de vehículos** cuando la URL ya indica el vehículo.
+- **`preconnect`** al servidor de teselas y el **mapa se muestra con la primera tesela**, sin esperar a todas.
+- **Fuentes autoalojadas** (sin peticiones a terceros), 0 ms de bloqueo del hilo principal y CLS 0 medido en todas las transiciones.
+
+## Limitaciones conocidas
+
+- **Cuota de almacenamiento del servidor demo de Traccar**: tras unas 3.000 posiciones por dispositivo, demo4 sigue aceptando conexiones (actualiza `lastUpdate`) pero **deja de guardar posiciones nuevas**. La app lo refleja correctamente: la tarjeta marca los datos como antiguos ("Hace 1 hora (datos antiguos)", en ámbar). Para una demo prolongada, usa un dispositivo nuevo o espera a que la cuota se reinicie.
+- **Teselas de OpenStreetMap**: su [política de uso](https://operations.osmfoundation.org/policies/tiles/) no admite tráfico intenso. En producción se usaría un proveedor con clave (MapTiler, Stadia…) cambiando solo `TILE_URL`.
+- **Polling cada 5 s** en lugar de WebSocket (`/api/socket`): los rewrites de Vercel no pasan WebSockets. Con un servidor propio, el socket de Traccar reduciría la latencia.
 
 ## Datos en tiempo real (simulador)
 
