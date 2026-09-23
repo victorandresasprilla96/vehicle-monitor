@@ -10,6 +10,9 @@
     <meta name="color-scheme" content="light dark" />
     <meta name="theme-color" content="#f3f5f8" />
     <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+    <!-- Map tiles: open the connection early. No crossorigin: Leaflet loads tiles as
+         plain (non-CORS) images, which would not reuse a CORS preconnect. -->
+    <link rel="preconnect" href="https://tile.openstreetmap.org" />
     <title>Monitor de flota</title>
     <script>
       // Apply the theme before first paint to avoid a flash of the wrong theme.
