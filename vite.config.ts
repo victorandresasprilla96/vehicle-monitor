@@ -15,6 +15,13 @@ export default defineConfig(({ mode }) => {
         '/api': { target, changeOrigin: true, secure: true, ws: true },
       },
     },
+    // Same proxy for `npm run preview`, to try the production build locally
+    // (in production, vercel.json rewrites /api the same way).
+    preview: {
+      proxy: {
+        '/api': { target, changeOrigin: true, secure: true },
+      },
+    },
     test: {
       environment: 'jsdom',
       globals: true,
