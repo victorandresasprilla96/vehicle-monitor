@@ -22,6 +22,8 @@ interface ErrorStateProps {
    * Control-room screens are often unattended: they should heal themselves.
    */
   autoRetrySeconds?: number
+  /** Heading level: 1 when the error *is* the page (full-screen), 2 by default, 3 when compact */
+  headingLevel?: 1 | 2 | 3
 }
 
 /**
@@ -38,13 +40,14 @@ export function ErrorState({
   compact = false,
   context,
   autoRetrySeconds,
+  headingLevel,
 }: ErrorStateProps) {
   const { title, description } = errorCopy(error)
   const retryRef = useRef<HTMLButtonElement>(null)
   const titleId = useId()
   const kind = isApiError(error) ? error.kind : 'unknown'
   const status = isApiError(error) ? error.status : null
-  const Heading = compact ? 'h3' : 'h2'
+  const Heading = `h${headingLevel ?? (compact ? 3 : 2)}` as 'h1' | 'h2' | 'h3'
   // When the error was first shown, for the technical details
   const [shownAt] = useState(() => new Date())
 

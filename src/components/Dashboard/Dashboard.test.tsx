@@ -258,4 +258,14 @@ describe('Dashboard', () => {
     ).toBeInTheDocument()
     expect(screen.queryByTestId('vehicle-map')).not.toBeInTheDocument()
   })
+
+  it('names the tab after the selected vehicle and its status', async () => {
+    fakeTraccar({
+      'GET /api/devices': () => json([device]),
+      'GET /api/positions': () => json([position]),
+    })
+    renderWithProviders(<Dashboard user={user} />)
+    await screen.findByText('87 %')
+    expect(document.title).toBe('Camión 01 · En línea — Monitor de flota')
+  })
 })

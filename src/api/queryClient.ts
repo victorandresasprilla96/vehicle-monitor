@@ -1,6 +1,7 @@
 import { QueryCache, QueryClient } from '@tanstack/react-query'
 import { isAuthError, isRetryable } from './errors'
 import type { User } from './types'
+import { setSessionHint } from '../utils/sessionHint'
 
 export const POLL_INTERVAL_MS = Number(import.meta.env.VITE_POLL_INTERVAL_MS) || 5000
 export const DEVICES_POLL_INTERVAL_MS = POLL_INTERVAL_MS * 2
@@ -25,6 +26,7 @@ export function createQueryClient(): QueryClient {
       // leaving the operator looking at frozen data.
       onError: (error, query) => {
         if (isAuthError(error) && query.queryKey[0] !== queryKeys.session[0]) {
+          setSessionHint(false)
           client.setQueryData<SessionNotice>(queryKeys.sessionNotice, 'expired')
           client.setQueryData<User | null>(queryKeys.session, null)
           client.removeQueries({ predicate: (q) => q.queryKey[0] !== queryKeys.session[0] })

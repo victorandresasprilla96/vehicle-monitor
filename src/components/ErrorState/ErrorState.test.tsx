@@ -74,4 +74,11 @@ describe('ErrorState', () => {
     expect(screen.getByRole('heading', { level: 3 })).toBeInTheDocument()
     expect(screen.getByRole('button', { name: 'Reintentar' })).not.toHaveFocus()
   })
+
+  it('can be the page heading when it is the whole page', () => {
+    render(<ErrorState error={new ApiError('network', 'x')} onRetry={() => {}} headingLevel={1} />)
+    expect(screen.getByRole('heading', { level: 1 })).toHaveTextContent(
+      'No logramos conectar con el servidor de seguimiento',
+    )
+  })
 })

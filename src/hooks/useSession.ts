@@ -2,12 +2,18 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { queryKeys, type SessionNotice } from '../api/queryClient'
 import { getSession, login, logout } from '../api/traccar'
 import type { User } from '../api/types'
+import { hasSessionHint, setSessionHint } from '../utils/sessionHint'
 
 /** Current user restored from the session cookie; null when logged out. */
 export function useSession() {
   return useQuery({
     queryKey: queryKeys.session,
-    queryFn: ({ signal }) => getSession(signal),
+    queryFn: async ({ signal }) => {
+      if (!hasSessionHint()) return null // never logged in here: skip the certain 404
+      const user = await getSession(signal)
+      if (!user) setSessionHint(false)
+      return user
+    },
     staleTime: Infinity,
   })
 }
@@ -29,6 +35,7 @@ export function useLogin() {
     mutationFn: ({ email, password }: { email: string; password: string }) =>
       login(email, password),
     onSuccess: (user) => {
+      setSessionHint(true)
       queryClient.setQueryData<SessionNotice>(queryKeys.sessionNotice, null)
       queryClient.setQueryData<User | null>(queryKeys.session, user)
     },
@@ -41,6 +48,7 @@ export function useLogout() {
     mutationFn: logout,
     // Even if the server call fails, the operator asked to leave: clear local state.
     onSettled: () => {
+      setSessionHint(false)
       queryClient.removeQueries({ predicate: (q) => q.queryKey[0] !== queryKeys.session[0] })
       queryClient.setQueryData<SessionNotice>(queryKeys.sessionNotice, 'logged-out')
       queryClient.setQueryData<User | null>(queryKeys.session, null)

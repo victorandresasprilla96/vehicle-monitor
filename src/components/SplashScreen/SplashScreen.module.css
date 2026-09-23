@@ -9,7 +9,7 @@
 }
 
 .mark {
-  animation: breathe 1.6s var(--ease-in-out) infinite;
+  animation: breathe 1.6s var(--ease-in-out) 3; /* 4.8 s (WCAG 2.2.2) */
 }
 
 .text {

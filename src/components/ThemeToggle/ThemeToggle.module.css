@@ -112,3 +112,30 @@
 .toggle[aria-checked='true'] .iconSun {
   opacity: 0.6;
 }
+
+/* Forced colors drop background colours, which would erase the thumb (the
+   only on/off cue). Draw it with system colours instead. */
+@media (forced-colors: active) {
+  .thumb {
+    forced-color-adjust: none;
+    background-color: CanvasText;
+  }
+
+  .toggle[aria-checked='true'] .thumb {
+    background-color: Highlight;
+  }
+
+  .toggle[aria-checked='true'] .track {
+    border-color: Highlight;
+  }
+
+  .iconSun,
+  .iconMoon {
+    forced-color-adjust: none;
+    color: CanvasText;
+  }
+
+  .toggle[aria-checked='true'] .iconMoon {
+    color: HighlightText;
+  }
+}
