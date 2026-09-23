@@ -1,8 +1,10 @@
-import { useState, type ReactNode } from 'react'
+import { useState, type CSSProperties, type ReactNode } from 'react'
 import { SIDE_BY_SIDE_QUERY, useMediaQuery } from '../../hooks/useMediaQuery'
+import { BottomSheet } from '../BottomSheet/BottomSheet'
 import { BrandMark } from '../BrandMark/BrandMark'
 import { ThemeToggle } from '../ThemeToggle/ThemeToggle'
 import styles from './AppShell.module.css'
+import { MapInsetContext } from './layoutContext'
 
 interface AppShellProps {
   /** Vehicle selector + status card */
@@ -20,6 +22,9 @@ export function AppShell({ panel, map, actions }: AppShellProps) {
   const [collapsedPref, setCollapsedPref] = useState(false)
   // Collapsing only exists beside the map; stacked layouts always show the panel.
   const collapsed = sideBySide && collapsedPref
+  // Map area covered by the mobile bottom sheet (0 beside the panel)
+  const [sheetInset, setSheetInset] = useState(0)
+  const mapInset = sideBySide ? 0 : sheetInset
 
   return (
     <div className={styles.shell}>
@@ -43,16 +48,28 @@ export function AppShell({ panel, map, actions }: AppShellProps) {
         </div>
       </header>
 
-      <main className={styles.main} data-collapsed={collapsed || undefined}>
-        <aside
-          id={PANEL_ID}
-          className={styles.panel}
-          aria-label="Estado del vehículo"
-          tabIndex={-1}
-          hidden={collapsed}
-        >
-          {panel}
-        </aside>
+      <main
+        className={styles.main}
+        data-layout={sideBySide ? 'side' : 'sheet'}
+        data-collapsed={collapsed || undefined}
+        style={{ '--map-inset-bottom': `${mapInset}px` } as CSSProperties}
+      >
+        {sideBySide ? (
+          <aside
+            id={PANEL_ID}
+            className={styles.panel}
+            aria-label="Estado del vehículo"
+            tabIndex={-1}
+            hidden={collapsed}
+          >
+            {panel}
+          </aside>
+        ) : (
+          // Mobile / portrait tablet: the panel is a bottom sheet over a full-height map
+          <BottomSheet id={PANEL_ID} label="Estado del vehículo" onInsetChange={setSheetInset}>
+            {panel}
+          </BottomSheet>
+        )}
         <section className={styles.map} aria-label="Mapa">
           {/* Disclosure for the panel: constant name, state in aria-expanded */}
           {sideBySide && (
@@ -67,7 +84,7 @@ export function AppShell({ panel, map, actions }: AppShellProps) {
               <span>Panel del vehículo</span>
             </button>
           )}
-          {map}
+          <MapInsetContext value={mapInset}>{map}</MapInsetContext>
         </section>
       </main>
     </div>

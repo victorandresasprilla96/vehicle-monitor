@@ -114,14 +114,28 @@ El realce es un pseudo-elemento detrás del texto (sin impacto en el layout) y s
 
 | Pantalla | Distribución |
 |---|---|
-| Móvil (vertical) | Mapa arriba (36 % de la altura, entre 240 y 448 px) y panel debajo, con un solo scroll. Desplegable nativo para elegir vehículo. |
-| Móvil horizontal, ventana con zoom 200 % | Panel al lado del mapa (regla de "horizontal y baja altura"), para que los datos no queden fuera de la pantalla. |
-| Tablet horizontal y escritorio (≥ 960 px) | Panel lateral fluido (280–380 px) y mapa. El panel se puede **plegar** para ver el mapa completo (botón con `aria-expanded`, el mapa conserva el centro). |
-| Flota pequeña (≤ 6) con panel lateral | **Lista de vehículos** con el estado de cada uno a la vista (radios nativos en un `fieldset`, operable con flechas). |
+| Móvil y tablet en vertical | Mapa a pantalla completa y panel como **bottom sheet**. Plegada muestra vehículo, estado y velocidad; se expande con un toque en el asa, con Enter o Space, o arrastrando. |
+| Móvil en horizontal, ventana con zoom 200 % | Panel al lado del mapa (regla de "horizontal y poca altura"), para que los datos no queden fuera de la pantalla. |
+| Tablet horizontal y escritorio (≥ 960 px) | Panel lateral fluido (280–380 px) y mapa. El panel se puede **plegar** para ver el mapa completo (`aria-expanded`); el mapa conserva el centro. |
 
-- **Reflow (WCAG 1.4.10)**: sin scroll horizontal a 320 px. La cabecera se compacta y "Cerrar sesión" pasa a ser un icono que conserva su nombre accesible.
-- Verificado en 8 tamaños (320, 390, 844×390, 768, 1024, 1280, 1280 al 200 % y 1920): sin desbordamiento horizontal y con la velocidad visible sin hacer scroll en todos.
-- El skeleton de la lista recuerda el número de vehículos de la última sesión, así que la carga no mueve el layout (CLS = 0).
+**Selector de vehículo según el tamaño de la flota**
+
+| Flota | Control |
+|---|---|
+| ≤ 6 vehículos con panel lateral | **Lista** con el estado de cada vehículo a la vista (radios nativos en un `fieldset`, operable con las flechas). |
+| > 6 vehículos | **Combobox con búsqueda** según el patrón *editable combobox* de WAI-ARIA APG (`aria-activedescendant`, ↓/↑, Enter, Esc). La búsqueda ignora tildes y mayúsculas y admite varias palabras ("cam 02"), y el número de resultados se anuncia. |
+| Pocos vehículos en móvil | `<select>` nativo (selector nativo del sistema en pantallas táctiles). |
+
+**Bottom sheet accesible**
+- El arrastre es opcional: el asa es un botón (WCAG 2.5.1).
+- El contenido nunca se oculta a las tecnologías de asistencia, así que los avisos en directo siguen funcionando. Si el foco entra en la parte tapada, la hoja se expande sola.
+- Esc la pliega y devuelve el foco al asa.
+- Los controles del mapa y la atribución se colocan por encima de la hoja, y la cámara centra el vehículo en la **zona visible** del mapa.
+
+**Verificado en Chrome**
+- **Reflow (WCAG 1.4.10)**: sin scroll horizontal a 320 px; "Cerrar sesión" pasa a icono y conserva su nombre accesible.
+- **Texto al 200 % (WCAG 1.4.4)**: probado con el tamaño de letra del navegador a 32 px (no con un estilo raíz, que no afecta a las media queries en `rem`). Sin desbordamiento ni texto cortado en escritorio ni en móvil.
+- **8 tamaños** (320, 390, 844×390, 768, 1024, 1280, 1280 al 200 % y 1920): sin desbordamiento horizontal y con la velocidad visible sin scroll. **CLS = 0** en la carga, tanto en escritorio (lista) como en móvil (hoja).
 
 ## Datos en tiempo real (simulador)
 

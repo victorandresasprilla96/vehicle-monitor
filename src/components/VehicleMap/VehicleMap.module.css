@@ -24,6 +24,12 @@
   transition: filter var(--duration-slow) var(--ease-standard);
 }
 
+/* Bottom controls + attribution stay above the mobile bottom sheet */
+.map :global(.leaflet-bottom) {
+  bottom: var(--map-inset-bottom, 0px);
+  transition: bottom var(--duration-slow) var(--ease-standard);
+}
+
 /* ---------- Leaflet controls, re-themed with our tokens ---------- */
 .map :global(.leaflet-bar) {
   overflow: hidden;
@@ -154,7 +160,7 @@
    zoom + attribution own the bottom right. Same place on mobile and desktop. */
 .follow {
   position: absolute;
-  bottom: var(--space-4);
+  bottom: calc(var(--map-inset-bottom, 0px) + var(--space-4));
   left: var(--space-4);
   z-index: var(--z-overlay);
   display: inline-flex;
@@ -170,6 +176,7 @@
   font-size: var(--font-size-sm);
   font-weight: var(--font-weight-medium);
   transition:
+    bottom var(--duration-slow) var(--ease-standard),
     background-color var(--duration-fast) var(--ease-standard),
     border-color var(--duration-fast) var(--ease-standard),
     color var(--duration-fast) var(--ease-standard);

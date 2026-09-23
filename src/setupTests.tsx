@@ -14,6 +14,20 @@ if (typeof window !== 'undefined' && !window.matchMedia) {
   })
 }
 
+// jsdom doesn't implement scrollIntoView (used to keep the active combobox option visible)
+if (typeof Element !== 'undefined' && !Element.prototype.scrollIntoView) {
+  Element.prototype.scrollIntoView = () => {}
+}
+
+// jsdom has no layout engine, so no ResizeObserver (the bottom sheet measures itself)
+if (typeof window !== 'undefined' && typeof window.ResizeObserver === 'undefined') {
+  window.ResizeObserver = class {
+    observe() {}
+    unobserve() {}
+    disconnect() {}
+  }
+}
+
 // Leaflet needs real layout (container size, tiles). Component tests use this
 // light double; the real map is covered by markerAnimator tests + browser E2E.
 vi.mock('./components/VehicleMap/VehicleMap', () => ({

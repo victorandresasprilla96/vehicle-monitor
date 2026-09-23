@@ -3,6 +3,7 @@ import { useCallback, useEffect, useRef, useState } from 'react'
 import { MapContainer, TileLayer, ZoomControl, useMap } from 'react-leaflet'
 import type { Device, Position } from '../../api/types'
 import { useReducedMotion } from '../../hooks/useReducedMotion'
+import { useMapBottomInset } from '../AppShell/layoutContext'
 import { STATUS_LABEL } from '../../utils/status'
 import { courseToCompassLong, knotsToKmh } from '../../utils/units'
 import { MapSkeleton } from '../MapSkeleton/MapSkeleton'
@@ -133,6 +134,9 @@ interface MapBehaviourProps {
 /** Accessible container semantics, follow-the-vehicle camera and "user took over" detection. */
 function MapBehaviour({ deviceId, target, following, animate, onUserMove }: MapBehaviourProps) {
   const map = useMap()
+  // Part of the map hidden behind the mobile bottom sheet: centre the vehicle
+  // in the *visible* area by shifting the camera down by half of it.
+  const bottomInset = useMapBottomInset()
   const [lat, lng] = target ?? [null, null]
   // Which vehicle the camera last framed; a ref, since it doesn't affect rendering
   const cameraDevice = useRef<number | null>(null)
@@ -174,19 +178,22 @@ function MapBehaviour({ deviceId, target, following, animate, onUserMove }: MapB
   // Camera: jump on vehicle switch, otherwise glide with the marker (same curve & duration).
   useEffect(() => {
     if (lat === null || lng === null || !following) return
-    if (cameraDevice.current !== deviceId) {
-      map.setView([lat, lng], Math.max(map.getZoom(), DEFAULT_ZOOM), { animate: false })
+    const firstFrame = cameraDevice.current !== deviceId
+    const zoom = firstFrame ? Math.max(map.getZoom(), DEFAULT_ZOOM) : map.getZoom()
+    const centre = map.unproject(map.project([lat, lng], zoom).add([0, bottomInset / 2]), zoom)
+    if (firstFrame) {
+      map.setView(centre, zoom, { animate: false })
       cameraDevice.current = deviceId
       return
     }
-    map.panTo([lat, lng], {
+    map.panTo(centre, {
       animate,
       duration: MARKER_ANIMATION_MS / 1000,
       // Leaflet eases with 1 - (1 - t)^(1/easeLinearity): 1/3 → ease-out cubic,
       // exactly the marker's curve, so the vehicle stays centred while both move.
       easeLinearity: 1 / 3,
     })
-  }, [map, lat, lng, following, animate, deviceId])
+  }, [map, lat, lng, following, animate, deviceId, bottomInset])
 
   return null
 }

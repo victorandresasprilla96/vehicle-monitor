@@ -12,6 +12,7 @@ import { AppShell } from '../AppShell/AppShell'
 import { Button } from '../Button/Button'
 import { ConnectionBanner, type ConnectionState } from '../ConnectionBanner/ConnectionBanner'
 import { DeviceSelector, DeviceSelectorSkeleton } from '../DeviceSelector/DeviceSelector'
+import { VehicleCombobox } from '../DeviceSelector/VehicleCombobox'
 import { VEHICLE_LIST_MAX, VehicleList, VehicleListSkeleton } from '../DeviceSelector/VehicleList'
 import { ErrorState } from '../ErrorState/ErrorState'
 import { MapSkeleton } from '../MapSkeleton/MapSkeleton'
@@ -140,10 +141,18 @@ export function Dashboard({ user }: { user: User }) {
   } else if (devices) {
     panel = (
       <>
-        {/* Small fleet beside the map: list with every status visible.
-            Otherwise (many vehicles, or stacked on mobile): native select. */}
+        {/* Picker by fleet size and layout:
+            · ≤ 6 beside the map → list (every status visible at a glance)
+            · > 6 anywhere        → searchable combobox
+            · few, stacked/mobile → native select (native picker on touch) */}
         {showsList(devices.length) ? (
           <VehicleList
+            devices={devices}
+            selectedId={selectedDevice?.id ?? null}
+            onChange={setSelectedId}
+          />
+        ) : devices.length > VEHICLE_LIST_MAX ? (
+          <VehicleCombobox
             devices={devices}
             selectedId={selectedDevice?.id ?? null}
             onChange={setSelectedId}

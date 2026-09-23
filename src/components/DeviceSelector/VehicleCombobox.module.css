@@ -1,0 +1,170 @@
+.combobox {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1-5);
+}
+
+.labelRow {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: var(--space-2);
+}
+
+.label {
+  font-size: var(--font-size-sm);
+  font-weight: var(--font-weight-medium);
+}
+
+.hint {
+  color: var(--color-text-muted);
+  font-size: var(--font-size-xs);
+  font-variant-numeric: tabular-nums;
+}
+
+.field {
+  position: relative;
+}
+
+.input {
+  width: 100%;
+  min-height: var(--tap-target-min);
+  padding: 0 calc(var(--space-3) + var(--space-6)) 0 var(--space-3);
+  border: var(--border-width) solid var(--color-border-strong);
+  border-radius: var(--radius-md);
+  background-color: var(--color-surface);
+  font-size: var(--font-size-md); /* ≥ 16 px: no iOS zoom on focus */
+  font-weight: var(--font-weight-medium);
+  cursor: pointer;
+  transition: border-color var(--duration-fast) var(--ease-standard);
+}
+
+.input[data-has-leading] {
+  padding-left: calc(var(--space-3) + 0.625rem + var(--space-2));
+}
+
+.input:hover {
+  border-color: var(--color-text-muted);
+}
+
+.input:focus {
+  border-color: var(--color-focus);
+  outline: var(--focus-ring-width) solid var(--color-focus);
+  outline-offset: 0;
+  cursor: text;
+}
+
+.input::placeholder {
+  color: var(--color-text-subtle);
+  font-weight: var(--font-weight-regular);
+}
+
+.leading {
+  position: absolute;
+  top: 50%;
+  left: var(--space-3);
+  display: flex;
+  transform: translateY(-50%);
+  pointer-events: none;
+}
+
+.chevron {
+  position: absolute;
+  top: 50%;
+  right: var(--space-3);
+  display: flex;
+  color: var(--color-text-muted);
+  transform: translateY(-50%);
+  pointer-events: none;
+}
+
+.listbox {
+  position: absolute;
+  top: calc(100% + var(--space-1));
+  right: 0;
+  left: 0;
+  z-index: var(--z-overlay);
+  max-height: min(18rem, 50dvh);
+  margin: 0;
+  padding: var(--space-1);
+  overflow-y: auto;
+  border: var(--border-width) solid var(--color-border-strong);
+  border-radius: var(--radius-md);
+  background-color: var(--color-surface-raised);
+  box-shadow: var(--shadow-3);
+}
+
+.option {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  min-height: var(--tap-target-min);
+  padding: var(--space-1-5) var(--space-3);
+  border-radius: var(--radius-sm);
+  cursor: pointer;
+}
+
+/* Active (keyboard/pointer) option: the one Enter would pick */
+.option[aria-selected='true'] {
+  background-color: var(--color-accent-soft);
+  outline: var(--focus-ring-width) solid var(--color-focus);
+  outline-offset: calc(var(--focus-ring-width) * -1);
+}
+
+.optionText {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  min-width: 0;
+}
+
+.optionName {
+  overflow: hidden;
+  font-size: var(--font-size-sm);
+  font-weight: var(--font-weight-semibold);
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.optionStatus {
+  font-size: var(--font-size-xs);
+  font-weight: var(--font-weight-medium);
+}
+
+.optionStatus[data-status='online'] {
+  color: var(--color-online);
+}
+
+.optionStatus[data-status='offline'] {
+  color: var(--color-offline);
+}
+
+.optionStatus[data-status='unknown'] {
+  color: var(--color-unknown);
+}
+
+.check {
+  flex-shrink: 0;
+  color: var(--color-accent);
+}
+
+.empty {
+  position: absolute;
+  top: calc(100% + var(--space-1));
+  right: 0;
+  left: 0;
+  z-index: var(--z-overlay);
+  padding: var(--space-3);
+  border: var(--border-width) solid var(--color-border-strong);
+  border-radius: var(--radius-md);
+  background-color: var(--color-surface-raised);
+  box-shadow: var(--shadow-3);
+  color: var(--color-text-muted);
+  font-size: var(--font-size-sm);
+}
+
+@media (forced-colors: active) {
+  .option[aria-selected='true'] {
+    outline-color: Highlight;
+  }
+}
