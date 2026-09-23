@@ -1,6 +1,7 @@
 import { lazy, Suspense, useEffect, useLayoutEffect, useRef, useState } from 'react'
 import type { User } from '../../api/types'
 import { useDevices } from '../../hooks/useDevices'
+import { useDocumentTitle } from '../../hooks/useDocumentTitle'
 import { SIDE_BY_SIDE_QUERY, useMediaQuery } from '../../hooks/useMediaQuery'
 import { useOnlineStatus } from '../../hooks/useOnlineStatus'
 import { usePosition } from '../../hooks/usePosition'
@@ -8,6 +9,7 @@ import { useSelectedDevice } from '../../hooks/useSelectedDevice'
 import { useSlowFlag } from '../../hooks/useSlowFlag'
 import { useLogout } from '../../hooks/useSession'
 import { readFleetSize, storeFleetSize } from '../../utils/fleetSize'
+import { STATUS_LABEL } from '../../utils/status'
 import { AppShell } from '../AppShell/AppShell'
 import { Button } from '../Button/Button'
 import { ConnectionBanner, type ConnectionState } from '../ConnectionBanner/ConnectionBanner'
@@ -52,6 +54,9 @@ export function Dashboard({ user }: { user: User }) {
   const selectedDevice =
     devices?.find((d) => d.id === selectedId) ?? (devices?.length === 1 ? devices[0] : null)
   const positionQuery = usePosition(selectedDevice?.id ?? null)
+  useDocumentTitle(
+    selectedDevice ? `${selectedDevice.name} · ${STATUS_LABEL[selectedDevice.status]}` : 'Flota',
+  )
 
   // Remember the fleet size for next session's skeleton
   useEffect(() => {

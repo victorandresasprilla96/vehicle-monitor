@@ -67,9 +67,14 @@
   }
 }
 
-/* Forced colors: backgrounds are dropped, keep a visible outline instead */
+/* Forced colors (Windows High Contrast) overrides `color: transparent`, which
+   would print the placeholder text ("00 km/h") as if it were real data.
+   Opt out and paint a neutral system-coloured block instead. */
 @media (forced-colors: active) {
   .skeleton {
-    outline: 1px solid GrayText;
+    forced-color-adjust: none;
+    color: transparent;
+    background: GrayText;
+    background-image: none;
   }
 }

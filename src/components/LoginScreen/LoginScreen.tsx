@@ -1,6 +1,7 @@
 import { useId, useRef, useState, type FormEvent } from 'react'
 import { isApiError } from '../../api/errors'
 import type { SessionNotice } from '../../api/queryClient'
+import { useDocumentTitle } from '../../hooks/useDocumentTitle'
 import { useLogin } from '../../hooks/useSession'
 import { errorCopy } from '../../utils/errorCopy'
 import { BrandMark } from '../BrandMark/BrandMark'
@@ -25,6 +26,7 @@ type FieldErrors = Partial<Record<'email' | 'password', string>>
 
 export function LoginScreen({ notice }: { notice: SessionNotice }) {
   const loginMutation = useLogin()
+  useDocumentTitle('Iniciar sesión')
   const [fieldErrors, setFieldErrors] = useState<FieldErrors>({})
   const [showPassword, setShowPassword] = useState(false)
   const emailRef = useRef<HTMLInputElement>(null)
@@ -75,9 +77,10 @@ export function LoginScreen({ notice }: { notice: SessionNotice }) {
 
   return (
     <div className={styles.screen}>
-      <div className={styles.topBar}>
+      {/* banner landmark: every piece of content lives in a landmark (axe "region") */}
+      <header className={styles.topBar}>
         <ThemeToggle />
-      </div>
+      </header>
 
       <main className={styles.main}>
         <section className={styles.card} aria-labelledby={ids.heading}>

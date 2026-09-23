@@ -37,10 +37,12 @@ export function AppShell({ panel, map, actions }: AppShellProps) {
       <header className={styles.header}>
         <div className={styles.brand}>
           <BrandMark />
-          <h1 className={styles.title}>
-            Monitor de flota
-            <span className={styles.subtitle}>Central de operaciones</span>
-          </h1>
+          {/* Subtitle outside the h1: inside, screen readers read
+              "Monitor de flotaCentral de operaciones" as one run-on heading */}
+          <div className={styles.titleGroup}>
+            <h1 className={styles.title}>Monitor de flota</h1>
+            <p className={styles.subtitle}>Central de operaciones</p>
+          </div>
         </div>
         <div className={styles.actions}>
           {actions}

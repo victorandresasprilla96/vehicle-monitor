@@ -20,6 +20,7 @@ export default function App() {
           onRetry={() => session.refetch()}
           retrying={session.isFetching}
           autoRetrySeconds={15}
+          headingLevel={1} // the error is the whole page
         />
       </main>
     )

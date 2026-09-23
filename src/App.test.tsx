@@ -58,6 +58,7 @@ function fakeTraccar(routes: Record<string, () => Response | Promise<Response>>)
 beforeEach(() => {
   window.history.replaceState(null, '', '/')
   localStorage.clear()
+  localStorage.setItem('vm-has-session', '1') // exercise the real session check
 })
 
 afterEach(() => {
@@ -69,8 +70,9 @@ describe('App', () => {
     fakeTraccar({ 'GET /api/session': () => new Response('', { status: 404 }) })
     renderWithProviders(<App />)
 
-    expect(await screen.findByRole('heading', { name: 'Monitor de flota' })).toBeInTheDocument()
-    expect(screen.getByLabelText('Usuario o email')).toBeInTheDocument()
+    // The splash also has an h1 "Monitor de flota": wait for the form itself
+    expect(await screen.findByLabelText('Usuario o email')).toBeInTheDocument()
+    expect(screen.getByRole('heading', { level: 1, name: 'Monitor de flota' })).toBeInTheDocument()
     expect(screen.getByLabelText('Contraseña')).toHaveAttribute('type', 'password')
   })
 
@@ -152,5 +154,14 @@ describe('App', () => {
     const notice = await screen.findByText(/Tu sesión ha caducado/)
     expect(notice).toHaveAttribute('role', 'status')
     expect(screen.getByLabelText('Usuario o email')).toBeInTheDocument()
+  })
+
+  it('skips the session request for a browser that never logged in', async () => {
+    localStorage.removeItem('vm-has-session')
+    const fetchMock = fakeTraccar({})
+    renderWithProviders(<App />)
+
+    expect(await screen.findByLabelText('Usuario o email')).toBeInTheDocument()
+    expect(fetchMock).not.toHaveBeenCalled()
   })
 })

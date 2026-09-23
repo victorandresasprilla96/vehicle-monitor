@@ -5,6 +5,7 @@ import styles from './SplashScreen.module.css'
 export function SplashScreen() {
   return (
     <div className={styles.splash} role="status" aria-busy="true">
+      <h1 className="sr-only">Monitor de flota</h1>
       <BrandMark size={44} className={styles.mark} />
       <p className={styles.text}>Recuperando sesión…</p>
     </div>

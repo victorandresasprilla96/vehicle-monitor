@@ -137,6 +137,37 @@ El realce es un pseudo-elemento detrás del texto (sin impacto en el layout) y s
 - **Texto al 200 % (WCAG 1.4.4)**: probado con el tamaño de letra del navegador a 32 px (no con un estilo raíz, que no afecta a las media queries en `rem`). Sin desbordamiento ni texto cortado en escritorio ni en móvil.
 - **8 tamaños** (320, 390, 844×390, 768, 1024, 1280, 1280 al 200 % y 1920): sin desbordamiento horizontal y con la velocidad visible sin scroll. **CLS = 0** en la carga, tanto en escritorio (lista) como en móvil (hoja).
 
+## Accesibilidad (WCAG 2.2 AA)
+
+### Resultados de la auditoría
+
+| Herramienta | Alcance | Resultado |
+|---|---|---|
+| **axe-core 4.13** (WCAG 2.0/2.1/2.2 A+AA + buenas prácticas) | 14 estados: login, login con error, panel, panel plegado, hoja inferior plegada y expandida (todo en claro y oscuro), combobox abierto y error de servidor | **0 violaciones** |
+| **Lighthouse 13** | Login y panel con sesión iniciada | **Accesibilidad 100 · Buenas prácticas 100** |
+| Recorrido con teclado | Escritorio y móvil, de principio a fin | Foco visible en las 11 paradas (contraste del anillo de foco de 3.5:1 a 16.5:1), sin trampas de teclado |
+| Tamaño de objetivos (2.5.8) | Todos los controles | Mínimo 40 px (se exige 24) |
+| Contraste de la paleta (1.4.3 / 1.4.11) | 88 pares texto/fondo y control/foco, en ambos temas | Verificado por test (`contrast.test.ts`) |
+| Reflow y texto al 200 % (1.4.10 / 1.4.4) | 320 px y tamaño de letra del navegador a 32 px | Sin scroll horizontal ni texto cortado |
+| Alto contraste de Windows (`forced-colors`) | Login, panel y skeleton | Todos los indicadores visibles con colores del sistema |
+
+`npm run test` incluye **tests con axe-core** ([`a11y.test.tsx`](src/a11y.test.tsx)) sobre las pantallas principales: una regresión de accesibilidad rompe los tests.
+
+### Decisiones
+- **Semántica**: landmarks (`banner`, `main`, `complementary`, `region`), un único `h1` por pantalla, `<dl>/<dt>/<dd>` en la tarjeta, `<fieldset>` con `<legend>` en la lista de vehículos y `<time dateTime>`.
+- **Anuncios en directo**: una única región `role="status"` (educada) que solo anuncia cambios con significado; los errores bloqueantes usan `role="alert"`, con la cuenta atrás fuera de la región para que no se lea cada segundo.
+- **Color nunca como único indicador**: el estado siempre va en texto, con forma distinta para sin conexión (anillo hueco), y los umbrales de batería también se anuncian.
+- **Título de la pestaña dinámico**: "Camión 01 · En línea — Monitor de flota", para distinguir pestañas en una sala de control.
+- **Orden de foco en móvil**: la hoja inferior (datos del vehículo) va antes que el mapa, aunque visualmente esté debajo. Es intencionado: es el contenido principal y el mapa es contexto (WCAG 2.4.3 pide que el orden preserve el significado).
+- **Movimiento reducido**: `prefers-reduced-motion` desactiva interpolación, pulsos, shimmer y animaciones de zoom.
+
+### Prueba manual recomendada (VoiceOver: `Cmd + F5`)
+1. Login con una contraseña incorrecta: se anuncia "Usuario o contraseña incorrectos…".
+2. Al cargar un vehículo: "Cargando datos de Camión 01…".
+3. Tarjeta: cada dato se lee como pareja ("Velocidad, 43 km/h").
+4. Interruptor de tema: "Modo oscuro, interruptor, desactivado".
+5. Con el simulador: "Camión 01 se ha detenido" cuando para.
+
 ## Datos en tiempo real (simulador)
 
 Una cuenta nueva no tiene dispositivos. Para ver el vehículo moverse:
