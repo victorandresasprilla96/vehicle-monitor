@@ -1,6 +1,7 @@
 .wrap {
   position: absolute;
   inset: 0;
+  container-type: inline-size;
 }
 
 /* isolation: Leaflet's internal z-indices (400–1000) stay inside the map,
@@ -160,7 +161,10 @@
    zoom + attribution own the bottom right. Same place on mobile and desktop. */
 .follow {
   position: absolute;
-  bottom: calc(var(--map-inset-bottom, 0px) + var(--space-4));
+  /* Fallback = one line of attribution (measured value replaces it) */
+  bottom: calc(
+    var(--map-inset-bottom, 0px) + var(--attribution-height, 1.1875rem) + var(--space-2)
+  );
   left: var(--space-4);
   z-index: var(--z-overlay);
   display: inline-flex;
@@ -220,4 +224,23 @@
   color: var(--color-text-muted);
   font-size: var(--font-size-sm);
   text-align: center;
+}
+
+/* Narrow map (small phone, 200 % text): icon-only follow button so it never
+   reaches the zoom control; the label stays as its accessible name. */
+@container (max-width: 26rem) {
+  .follow {
+    min-width: 2.5rem;
+    padding: 0;
+    justify-content: center;
+  }
+
+  .followLabel {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    overflow: hidden;
+    clip: rect(0, 0, 0, 0);
+    white-space: nowrap;
+  }
 }

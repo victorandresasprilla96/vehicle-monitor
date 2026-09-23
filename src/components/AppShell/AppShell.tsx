@@ -54,22 +54,18 @@ export function AppShell({ panel, map, actions }: AppShellProps) {
         data-collapsed={collapsed || undefined}
         style={{ '--map-inset-bottom': `${mapInset}px` } as CSSProperties}
       >
-        {sideBySide ? (
-          <aside
-            id={PANEL_ID}
-            className={styles.panel}
-            aria-label="Estado del vehículo"
-            tabIndex={-1}
-            hidden={collapsed}
-          >
-            {panel}
-          </aside>
-        ) : (
-          // Mobile / portrait tablet: the panel is a bottom sheet over a full-height map
-          <BottomSheet id={PANEL_ID} label="Estado del vehículo" onInsetChange={setSheetInset}>
-            {panel}
-          </BottomSheet>
-        )}
+        {/* One component in both layouts (sheet on mobile, side panel otherwise):
+            rotating the phone switches mode without remounting the panel. */}
+        <BottomSheet
+          id={PANEL_ID}
+          label="Estado del vehículo"
+          enabled={!sideBySide}
+          className={styles.panel}
+          hidden={collapsed}
+          onInsetChange={setSheetInset}
+        >
+          {panel}
+        </BottomSheet>
         <section className={styles.map} aria-label="Mapa">
           {/* Disclosure for the panel: constant name, state in aria-expanded */}
           {sideBySide && (

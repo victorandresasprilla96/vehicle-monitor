@@ -15,11 +15,20 @@ interface BottomSheetProps {
   id: string
   label: string
   children: ReactNode
+  /**
+   * false → renders as a plain side panel (same element tree), so switching
+   * layout (e.g. rotating the phone) never remounts the panel or drops focus.
+   */
+  enabled?: boolean
+  className?: string
+  hidden?: boolean
   /** Reports how many px of the map the sheet covers (for map controls/camera) */
   onInsetChange?: (px: number) => void
 }
 
 const MIN_PEEK = 96
+/** Collapsed, the sheet never covers more than this share of the map area */
+const MAX_PEEK_RATIO = 0.5
 const PEEK_GAP = 12
 const DRAG_THRESHOLD = 6
 const FLICK_VELOCITY = 0.35 // px/ms
@@ -34,7 +43,15 @@ const FLICK_VELOCITY = 0.35 // px/ms
  *   working); if keyboard focus lands in the covered part, the sheet expands.
  * - Esc collapses it and returns focus to the handle.
  */
-export function BottomSheet({ id, label, children, onInsetChange }: BottomSheetProps) {
+export function BottomSheet({
+  id,
+  label,
+  children,
+  onInsetChange,
+  enabled = true,
+  className,
+  hidden,
+}: BottomSheetProps) {
   const bodyId = useId()
   const sheetRef = useRef<HTMLElement>(null)
   const handleRef = useRef<HTMLButtonElement>(null)
@@ -47,10 +64,11 @@ export function BottomSheet({ id, label, children, onInsetChange }: BottomSheetP
   const suppressClick = useRef(false)
 
   const maxOffset = Math.max(0, metrics.height - metrics.peek)
-  const offset = drag ? drag.offset : expanded ? 0 : maxOffset
+  const offset = !enabled ? 0 : drag ? drag.offset : expanded ? 0 : maxOffset
 
   // Measure sheet height and the peek line; re-measure whenever content changes.
   const measure = useCallback(() => {
+    if (!enabled) return
     const sheet = sheetRef.current
     const body = bodyRef.current
     const handle = handleRef.current
@@ -60,9 +78,12 @@ export function BottomSheet({ id, label, children, onInsetChange }: BottomSheetP
     const peekLine = boundary
       ? boundary.getBoundingClientRect().bottom - body.getBoundingClientRect().top + body.scrollTop
       : body.scrollHeight * 0.45
-    const peek = Math.min(height, Math.max(MIN_PEEK, handle.offsetHeight + peekLine + PEEK_GAP))
+    // Cap the peek so the map stays usable with large text on small phones
+    const available = sheet.parentElement?.clientHeight ?? height
+    const wanted = Math.max(MIN_PEEK, handle.offsetHeight + peekLine + PEEK_GAP)
+    const peek = Math.min(height, wanted, Math.max(MIN_PEEK, available * MAX_PEEK_RATIO))
     setMetrics((m) => (m.height === height && m.peek === peek ? m : { height, peek }))
-  }, [])
+  }, [enabled])
 
   useLayoutEffect(() => {
     measure()
@@ -80,8 +101,8 @@ export function BottomSheet({ id, label, children, onInsetChange }: BottomSheetP
   // Covered map area = visible part of the sheet
   const visible = Math.round(metrics.height - offset)
   useEffect(() => {
-    onInsetChange?.(drag ? metrics.peek : visible)
-  }, [visible, drag, metrics.peek, onInsetChange])
+    onInsetChange?.(!enabled ? 0 : drag ? metrics.peek : visible)
+  }, [enabled, visible, drag, metrics.peek, onInsetChange])
 
   useEffect(() => () => onInsetChange?.(0), [onInsetChange])
 
@@ -148,7 +169,7 @@ export function BottomSheet({ id, label, children, onInsetChange }: BottomSheetP
 
   // Keyboard focus inside the covered part → reveal it
   function onFocusCapture(e: FocusEvent<HTMLElement>) {
-    if (expanded || e.target === handleRef.current) return
+    if (!enabled || expanded || e.target === handleRef.current) return
     const target = e.target as HTMLElement
     const sheetTop = sheetRef.current?.getBoundingClientRect().top ?? 0
     const visibleBottom = sheetTop + metrics.peek
@@ -163,47 +184,51 @@ export function BottomSheet({ id, label, children, onInsetChange }: BottomSheetP
       id={id}
       aria-label={label}
       tabIndex={-1}
-      className={styles.sheet}
-      data-expanded={expanded || undefined}
+      className={enabled ? styles.sheet : className}
+      hidden={hidden}
+      data-expanded={(enabled && expanded) || undefined}
       data-dragging={drag ? true : undefined}
-      style={{ transform: `translateY(${offset}px)` }}
+      style={enabled ? { transform: `translateY(${offset}px)` } : undefined}
       onFocusCapture={onFocusCapture}
     >
-      <button
-        ref={handleRef}
-        type="button"
-        className={styles.handle}
-        aria-expanded={expanded}
-        aria-controls={bodyId}
-        onClick={onHandleClick}
-        onPointerDown={onPointerDown}
-        onPointerMove={onPointerMove}
-        onPointerUp={onPointerUp}
-        onPointerCancel={() => {
-          gesture.current = null
-          setDrag(null)
-        }}
-      >
-        <span className={styles.grip} aria-hidden="true" />
-        <span className={styles.handleLabel}>Detalles del vehículo</span>
-        <svg
-          className={styles.chevron}
-          viewBox="0 0 16 16"
-          width="16"
-          height="16"
-          aria-hidden="true"
+      {/* Handle only as a sheet; `false` keeps the slot so the body never remounts */}
+      {enabled && (
+        <button
+          ref={handleRef}
+          type="button"
+          className={styles.handle}
+          aria-expanded={expanded}
+          aria-controls={bodyId}
+          onClick={onHandleClick}
+          onPointerDown={onPointerDown}
+          onPointerMove={onPointerMove}
+          onPointerUp={onPointerUp}
+          onPointerCancel={() => {
+            gesture.current = null
+            setDrag(null)
+          }}
         >
-          <path
-            d="m4 10 4-4 4 4"
-            fill="none"
-            stroke="currentColor"
-            strokeWidth="1.6"
-            strokeLinecap="round"
-            strokeLinejoin="round"
-          />
-        </svg>
-      </button>
-      <div ref={bodyRef} id={bodyId} className={styles.body}>
+          <span className={styles.grip} aria-hidden="true" />
+          <span className={styles.handleLabel}>Detalles del vehículo</span>
+          <svg
+            className={styles.chevron}
+            viewBox="0 0 16 16"
+            width="16"
+            height="16"
+            aria-hidden="true"
+          >
+            <path
+              d="m4 10 4-4 4 4"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="1.6"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+            />
+          </svg>
+        </button>
+      )}
+      <div ref={bodyRef} id={bodyId} className={enabled ? styles.body : styles.panelBody}>
         {children}
       </div>
     </aside>

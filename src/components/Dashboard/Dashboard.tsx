@@ -1,4 +1,4 @@
-import { lazy, Suspense, useEffect, useState } from 'react'
+import { lazy, Suspense, useEffect, useLayoutEffect, useRef, useState } from 'react'
 import type { User } from '../../api/types'
 import { useDevices } from '../../hooks/useDevices'
 import { SIDE_BY_SIDE_QUERY, useMediaQuery } from '../../hooks/useMediaQuery'
@@ -60,6 +60,29 @@ export function Dashboard({ user }: { user: User }) {
   const [cachedFleetSize] = useState(readFleetSize)
   const showsList = (count: number | null) =>
     sideBySide && count !== null && count > 0 && count <= VEHICLE_LIST_MAX
+
+  // The picker changes type with the layout (select ↔ list when the phone
+  // rotates). If it had keyboard focus, hand focus to the new control.
+  const pickerRef = useRef<HTMLDivElement>(null)
+  const pickerHadFocus = useRef(false)
+  const pickerKind = !devices
+    ? 'none'
+    : showsList(devices.length)
+      ? 'list'
+      : devices.length > VEHICLE_LIST_MAX
+        ? 'combobox'
+        : 'select'
+  useLayoutEffect(() => {
+    if (!pickerHadFocus.current || !pickerRef.current) return
+    if (pickerRef.current.contains(document.activeElement)) return
+    // querySelector with a selector list returns the first match in *document*
+    // order, so ask for the checked radio explicitly before any fallback.
+    const root = pickerRef.current
+    ;(
+      root.querySelector<HTMLElement>('input[type=radio]:checked') ??
+      root.querySelector<HTMLElement>('select, input[role=combobox], input[type=radio]')
+    )?.focus()
+  }, [pickerKind])
 
   // Keep the URL in sync: record the auto-picked vehicle, drop ids that don't exist.
   useEffect(() => {
@@ -141,29 +164,39 @@ export function Dashboard({ user }: { user: User }) {
   } else if (devices) {
     panel = (
       <>
-        {/* Picker by fleet size and layout:
+        <div
+          ref={pickerRef}
+          className={styles.picker}
+          onFocus={() => (pickerHadFocus.current = true)}
+          onBlur={(e) => {
+            // Removal of the focused control fires no blur, so "had focus" survives a swap
+            if (!e.currentTarget.contains(e.relatedTarget as Node)) pickerHadFocus.current = false
+          }}
+        >
+          {/* Picker by fleet size and layout:
             · ≤ 6 beside the map → list (every status visible at a glance)
             · > 6 anywhere        → searchable combobox
             · few, stacked/mobile → native select (native picker on touch) */}
-        {showsList(devices.length) ? (
-          <VehicleList
-            devices={devices}
-            selectedId={selectedDevice?.id ?? null}
-            onChange={setSelectedId}
-          />
-        ) : devices.length > VEHICLE_LIST_MAX ? (
-          <VehicleCombobox
-            devices={devices}
-            selectedId={selectedDevice?.id ?? null}
-            onChange={setSelectedId}
-          />
-        ) : (
-          <DeviceSelector
-            devices={devices}
-            selectedId={selectedDevice?.id ?? null}
-            onChange={setSelectedId}
-          />
-        )}
+          {showsList(devices.length) ? (
+            <VehicleList
+              devices={devices}
+              selectedId={selectedDevice?.id ?? null}
+              onChange={setSelectedId}
+            />
+          ) : devices.length > VEHICLE_LIST_MAX ? (
+            <VehicleCombobox
+              devices={devices}
+              selectedId={selectedDevice?.id ?? null}
+              onChange={setSelectedId}
+            />
+          ) : (
+            <DeviceSelector
+              devices={devices}
+              selectedId={selectedDevice?.id ?? null}
+              onChange={setSelectedId}
+            />
+          )}
+        </div>
         {selectedDevice ? (
           <StatusCard
             device={selectedDevice}

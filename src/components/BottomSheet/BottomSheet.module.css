@@ -93,3 +93,11 @@
   overflow-y: auto;
   overscroll-behavior: contain;
 }
+
+/* Side-panel mode: the body is just the panel's content column */
+.panelBody {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+  min-width: 0;
+}
