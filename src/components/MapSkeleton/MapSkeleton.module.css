@@ -38,7 +38,7 @@
   inset: 0;
   border: 2px solid var(--color-skeleton-shine);
   border-radius: var(--radius-full);
-  animation: locate 1.8s var(--ease-out) 300ms infinite;
+  animation: locate 1.8s var(--ease-out) 300ms 2; /* 3.6 s (WCAG 2.2.2) */
 }
 
 .label {

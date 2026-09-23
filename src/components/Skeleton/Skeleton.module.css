@@ -18,7 +18,8 @@
    */
   animation:
     skeleton-in var(--duration-base) var(--ease-out) 300ms both,
-    shimmer var(--duration-shimmer) var(--ease-in-out) 300ms infinite;
+    /* 3 sweeps (4.8 s) then static — WCAG 2.2.2; past 5 s the "slow" hint takes over */ shimmer
+      var(--duration-shimmer) var(--ease-in-out) 300ms 3;
 }
 
 .text {

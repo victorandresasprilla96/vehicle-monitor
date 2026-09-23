@@ -110,7 +110,12 @@
   border: 2.5px solid var(--marker-color);
   border-radius: var(--radius-full);
   background-color: var(--color-surface-raised);
-  box-shadow: var(--shadow-2);
+  /* Halo in the surface colour around the status ring: the marker carries its
+     own contrast (ring vs halo ≥ 5.4:1, from the tested palette) whatever map
+     detail lies underneath — WCAG 1.4.11 for a graphic the operator relies on. */
+  box-shadow:
+    0 0 0 2.5px var(--color-surface-raised),
+    var(--shadow-2);
   transition:
     border-color var(--duration-slow) var(--ease-standard),
     opacity var(--duration-slow) var(--ease-standard);
@@ -134,9 +139,10 @@
   opacity: 0;
 }
 
-/* Only a live vehicle "breathes"; offline/unknown stay still */
+/* Only a live vehicle "breathes" — 2 cycles (4 s) when it comes online, then
+   rests (WCAG 2.2.2). Its gliding position is the essential real-time motion. */
 .marker[data-status='online']:not([data-stale]) .pulse {
-  animation: pulse var(--duration-pulse) var(--ease-out) infinite;
+  animation: pulse var(--duration-pulse) var(--ease-out) 2;
 }
 
 @keyframes pulse {

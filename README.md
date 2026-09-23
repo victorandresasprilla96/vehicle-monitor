@@ -143,13 +143,15 @@ El realce es un pseudo-elemento detrás del texto (sin impacto en el layout) y s
 
 | Herramienta | Alcance | Resultado |
 |---|---|---|
-| **axe-core 4.13** (WCAG 2.0/2.1/2.2 A+AA + buenas prácticas) | 14 estados: login, login con error, panel, panel plegado, hoja inferior plegada y expandida (todo en claro y oscuro), combobox abierto y error de servidor | **0 violaciones** |
+| **axe-core 4.13** (WCAG 2.0/2.1/2.2 A+AA + buenas prácticas) | **21 estados**: login (con error y con aviso de sesión cerrada), panel, panel plegado, hoja inferior plegada y expandida (en claro y oscuro), combobox abierto, carga lenta, banners de conexión (inestable / sin conexión / restablecida), vehículo sin posición, cuenta sin vehículos y error de servidor | **0 violaciones** |
 | **Lighthouse 13** | Login y panel con sesión iniciada | **Accesibilidad 100 · Buenas prácticas 100** |
 | Recorrido con teclado | Escritorio y móvil, de principio a fin | Foco visible en las 11 paradas (contraste del anillo de foco de 3.5:1 a 16.5:1), sin trampas de teclado |
 | Tamaño de objetivos (2.5.8) | Todos los controles | Mínimo 40 px (se exige 24) |
 | Contraste de la paleta (1.4.3 / 1.4.11) | 88 pares texto/fondo y control/foco, en ambos temas | Verificado por test (`contrast.test.ts`) |
 | Reflow y texto al 200 % (1.4.10 / 1.4.4) | 320 px y tamaño de letra del navegador a 32 px | Sin scroll horizontal ni texto cortado |
-| Alto contraste de Windows (`forced-colors`) | Login, panel y skeleton | Todos los indicadores visibles con colores del sistema |
+| Alto contraste de Windows (`forced-colors`) | Login, panel y skeleton, en temas claro y oscuro | Todos los indicadores visibles con colores del sistema |
+| Pausar, detener, ocultar (2.2.2) | Todas las animaciones automáticas | Ninguna dura más de 5 s (medido con `document.getAnimations()`) |
+| Contraste no textual del marcador (1.4.11) | Anillo de estado frente a su halo, medido a 3× | **5.41:1** en claro, **8.74:1** en oscuro, en las 24 direcciones |
 
 `npm run test` incluye **tests con axe-core** ([`a11y.test.tsx`](src/a11y.test.tsx)) sobre las pantallas principales: una regresión de accesibilidad rompe los tests.
 
@@ -160,6 +162,12 @@ El realce es un pseudo-elemento detrás del texto (sin impacto en el layout) y s
 - **Título de la pestaña dinámico**: "Camión 01 · En línea — Monitor de flota", para distinguir pestañas en una sala de control.
 - **Orden de foco en móvil**: la hoja inferior (datos del vehículo) va antes que el mapa, aunque visualmente esté debajo. Es intencionado: es el contenido principal y el mapa es contexto (WCAG 2.4.3 pide que el orden preserve el significado).
 - **Movimiento reducido**: `prefers-reduced-motion` desactiva interpolación, pulsos, shimmer y animaciones de zoom.
+- **Nada se mueve solo más de 5 s (WCAG 2.2.2)**, para todo el mundo y no solo con `prefers-reduced-motion`:
+  - El pulso de "En línea" hace 2 ciclos (4 s) al cambiar de estado.
+  - El punto de "Conexión inestable" parpadea 3 veces.
+  - El brillo del skeleton hace 3 barridos y, a los 5 s, le sustituye el aviso de carga lenta.
+  - Como imprescindibles quedan el movimiento del vehículo, los datos en directo (la función del producto) y el spinner de una petición en curso.
+- **Marcador con halo**: un anillo del color de la superficie rodea el anillo de estado, así que el marcador lleva su propio contraste (1.4.11) sea cual sea el detalle del mapa que tenga debajo.
 
 ### Prueba manual recomendada (VoiceOver: `Cmd + F5`)
 1. Login con una contraseña incorrecta: se anuncia "Usuario o contraseña incorrectos…".
