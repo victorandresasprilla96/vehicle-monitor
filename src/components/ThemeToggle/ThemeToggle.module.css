@@ -1,141 +1,38 @@
 .toggle {
-  display: inline-flex;
-  align-items: center;
-  gap: var(--space-2);
-  min-height: var(--tap-target-min);
-  padding: 0 var(--space-2);
+  display: grid;
+  place-items: center;
+  width: var(--tap-target-min);
+  height: var(--tap-target-min);
+  padding: 0;
   border: none;
   border-radius: var(--radius-full);
   background: transparent;
-  color: var(--color-text-muted);
-  font-size: var(--font-size-sm);
-  font-weight: var(--font-weight-medium);
+  color: var(--color-text);
+  transition:
+    background-color var(--duration-fast) var(--ease-standard),
+    color var(--duration-fast) var(--ease-standard);
 }
 
 .toggle:hover {
-  color: var(--color-text);
-}
-
-/* Ring goes around the track, not the whole (wider) tap area */
-.toggle:focus-visible {
-  outline: none;
-}
-
-.toggle:focus-visible .track {
-  outline: var(--focus-ring-width) solid var(--color-focus);
-  outline-offset: var(--focus-ring-offset);
-}
-
-/* Label is visible on wide screens; below that the switch keeps it as its accessible name */
-@media (max-width: 40rem) {
-  .label {
-    position: absolute;
-    width: 1px;
-    height: 1px;
-    overflow: hidden;
-    clip: rect(0, 0, 0, 0);
-    white-space: nowrap;
-  }
-}
-
-.track {
-  --track-w: 3.25rem;
-  --track-h: 1.75rem;
-  --thumb: 1.375rem;
-  --inset: calc((var(--track-h) - var(--thumb)) / 2);
-
-  position: relative;
-  display: inline-flex;
-  align-items: center;
-  justify-content: space-between;
-  width: var(--track-w);
-  height: var(--track-h);
-  padding: 0 0.4375rem;
-  border: var(--border-width) solid var(--color-border-strong);
-  border-radius: var(--radius-full);
   background-color: var(--color-surface-sunken);
-  color: var(--color-text-subtle);
-  transition:
-    background-color var(--duration-base) var(--ease-standard),
-    border-color var(--duration-base) var(--ease-standard);
 }
 
-.toggle:hover .track {
-  border-color: var(--color-text-muted);
-}
-
-.iconSun,
-.iconMoon {
-  position: relative;
-  z-index: 1;
-  transition:
-    color var(--duration-base) var(--ease-standard),
-    opacity var(--duration-base) var(--ease-standard);
-}
-
-.thumb {
-  position: absolute;
-  top: calc(var(--inset) - var(--border-width));
-  left: calc(var(--inset) - var(--border-width));
-  width: var(--thumb);
-  height: var(--thumb);
-  border-radius: var(--radius-full);
-  background-color: var(--color-surface-raised);
-  box-shadow: var(--shadow-1);
+.toggle svg {
   transition: transform var(--duration-base) var(--ease-standard);
 }
 
-/* Unchecked (light): thumb sits on the sun */
-.toggle[aria-checked='false'] .iconSun {
-  color: var(--color-warning);
+.toggle:active svg {
+  transform: rotate(-20deg) scale(0.92);
 }
 
-.toggle[aria-checked='false'] .iconMoon {
-  opacity: 0.6;
-}
-
-/* Checked (dark): thumb slides over the moon */
-.toggle[aria-checked='true'] .track {
-  background-color: var(--color-accent-soft);
-  border-color: var(--color-accent);
-}
-
-.toggle[aria-checked='true'] .thumb {
-  transform: translateX(calc(var(--track-w) - var(--thumb) - var(--inset) * 2));
-  background-color: var(--color-accent);
-}
-
-.toggle[aria-checked='true'] .iconMoon {
-  color: var(--color-on-accent);
-}
-
-.toggle[aria-checked='true'] .iconSun {
-  opacity: 0.6;
-}
-
-/* Forced colors drop background colours, which would erase the thumb (the
-   only on/off cue). Draw it with system colours instead. */
 @media (forced-colors: active) {
-  .thumb {
-    forced-color-adjust: none;
-    background-color: CanvasText;
+  .toggle {
+    border: 1px solid ButtonText;
   }
 
-  .toggle[aria-checked='true'] .thumb {
+  .toggle[aria-checked='true'] {
+    forced-color-adjust: none;
     background-color: Highlight;
-  }
-
-  .toggle[aria-checked='true'] .track {
-    border-color: Highlight;
-  }
-
-  .iconSun,
-  .iconMoon {
-    forced-color-adjust: none;
-    color: CanvasText;
-  }
-
-  .toggle[aria-checked='true'] .iconMoon {
     color: HighlightText;
   }
 }

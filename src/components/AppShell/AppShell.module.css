@@ -17,8 +17,8 @@
   align-items: center;
   justify-content: space-between;
   gap: var(--space-4);
-  padding: 0 max(var(--space-4), env(safe-area-inset-right)) 0
-    max(var(--space-4), env(safe-area-inset-left));
+  padding: 0 max(var(--space-6), env(safe-area-inset-right)) 0
+    max(var(--space-6), env(safe-area-inset-left));
   border-bottom: var(--border-width) solid var(--color-border);
   background-color: var(--color-surface);
 }
@@ -30,10 +30,6 @@
   min-width: 0;
 }
 
-.actions {
-  flex-shrink: 0;
-}
-
 .titleGroup {
   display: flex;
   flex-direction: column;
@@ -41,8 +37,8 @@
 }
 
 .title {
-  font-size: var(--font-size-md);
-  font-weight: var(--font-weight-semibold);
+  font-size: var(--font-size-lg);
+  font-weight: var(--font-weight-bold);
   letter-spacing: var(--letter-spacing-tight);
   line-height: var(--line-height-tight);
 }
@@ -50,7 +46,7 @@
 .subtitle {
   margin-top: var(--space-0-5);
   color: var(--color-text-muted);
-  font-size: var(--font-size-xs);
+  font-size: var(--font-size-sm);
   font-weight: var(--font-weight-regular);
   line-height: var(--line-height-tight);
   letter-spacing: var(--letter-spacing-normal);
@@ -58,8 +54,15 @@
 
 .actions {
   display: flex;
+  flex-shrink: 0;
   align-items: center;
-  gap: var(--space-2);
+  gap: var(--space-3);
+}
+
+.divider {
+  width: var(--border-width);
+  height: 2rem;
+  background-color: var(--color-border);
 }
 
 /* ---------- Main: panel + map ----------
@@ -82,11 +85,11 @@
   display: flex;
   flex-direction: column;
   gap: var(--space-4);
-  padding: var(--space-4);
-  padding-left: max(var(--space-4), env(safe-area-inset-left));
+  padding: var(--space-5) var(--space-5) var(--space-5)
+    max(var(--space-5), env(safe-area-inset-left));
   overflow-y: auto;
   border-right: var(--border-width) solid var(--color-border);
-  background-color: var(--color-bg);
+  background-color: var(--color-surface);
 }
 
 /* Programmatic focus target of the skip link: no ring on the whole panel */
@@ -124,36 +127,47 @@
   }
 }
 
-/* ---------- Panel toggle (only rendered in side-by-side layouts) ---------- */
-.panelToggle {
+/* ---------- Floating status card (side-by-side layouts) ---------- */
+.overlay {
   position: absolute;
-  top: var(--space-4);
-  left: var(--space-4);
+  top: var(--space-5);
+  left: var(--space-5);
+  z-index: var(--z-overlay);
+  width: clamp(22rem, 28vw, 28rem);
+  max-height: calc(100% - 2 * var(--space-5) - 4.5rem); /* room for the follow pill */
+  overflow-y: auto;
+  border-radius: var(--radius-xl);
+  box-shadow: var(--shadow-3);
+  overscroll-behavior: contain;
+}
+
+/* The card's own light shadow is replaced by the floating one */
+.overlay > section {
+  box-shadow: none;
+}
+
+/* ---------- Restore button (panel collapsed) ---------- */
+.restore {
+  position: absolute;
+  top: var(--space-5);
+  left: var(--space-5);
   z-index: var(--z-overlay);
   display: inline-flex;
   align-items: center;
   gap: var(--space-2);
-  min-height: 2.5rem;
-  padding: 0 var(--space-3);
-  border: var(--border-width) solid var(--color-border-strong);
-  border-radius: var(--radius-md);
+  min-height: var(--tap-target-min);
+  padding: 0 var(--space-4);
+  border: var(--border-width) solid var(--color-border);
+  border-radius: var(--radius-full);
   background-color: var(--color-surface-raised);
   box-shadow: var(--shadow-2);
   color: var(--color-text);
   font-size: var(--font-size-sm);
-  font-weight: var(--font-weight-medium);
+  font-weight: var(--font-weight-semibold);
 }
 
-.panelToggle:hover {
-  border-color: var(--color-text-muted);
-}
-
-.panelToggle svg {
-  transition: transform var(--duration-base) var(--ease-standard);
-}
-
-.panelToggle[aria-expanded='false'] svg {
-  transform: rotate(180deg);
+.restore:hover {
+  border-color: var(--color-border-strong);
 }
 
 /* ---------- Small screens: header must fit 320 px (WCAG 1.4.10 reflow) ---------- */
@@ -179,5 +193,15 @@
 
   .actions {
     gap: 0;
+  }
+
+  .divider {
+    display: none;
+  }
+}
+
+@media (max-width: 40rem) {
+  .header {
+    padding-inline: max(var(--space-4), env(safe-area-inset-left));
   }
 }

@@ -1,26 +1,49 @@
+/* "● Hace 10 s · 19:25:07" on one line, right-aligned; wraps under 200 % text */
 .time {
   display: inline-flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: flex-end;
   max-width: 100%;
-  flex-direction: column;
-  align-items: flex-end;
-  gap: var(--space-0-5);
+  column-gap: var(--space-1);
+  font-variant-numeric: tabular-nums;
+}
+
+.dot {
+  flex-shrink: 0;
+  width: 0.5rem;
+  height: 0.5rem;
+  margin-right: var(--space-1);
+  border-radius: var(--radius-full);
+  background-color: var(--color-online);
+  transition: background-color var(--duration-slow) var(--ease-standard);
 }
 
 .relative {
-  /* Fixed minimum box: "Hace unos segundos" ↔ "Hace 10 segundos" would otherwise
-     resize the cell every tick and register as layout shift (measured in Chrome). */
-  min-width: min(9.5rem, 100%);
-  text-align: right;
+  /* With 5 s polling this reads "Ahora" almost all the time; it only changes
+     when data ages, so the dot stays next to the text as in the design. */
   transition: color var(--duration-slow) var(--ease-standard);
 }
 
 .absolute {
-  color: var(--color-text-muted);
-  font-size: var(--font-size-xs);
-  font-weight: var(--font-weight-regular);
-  font-variant-numeric: tabular-nums;
+  font-weight: inherit;
+}
+
+.time[data-old] .dot {
+  background-color: var(--color-warning);
 }
 
 .time[data-old] .relative {
   color: var(--color-warning);
+}
+
+.compact[data-old] {
+  color: var(--color-warning);
+}
+
+@media (forced-colors: active) {
+  .dot {
+    forced-color-adjust: none;
+    background-color: CanvasText;
+  }
 }

@@ -11,10 +11,10 @@
   color-scheme: light;
 
   /* Surfaces */
-  --color-bg: #f3f5f8;
+  --color-bg: #f5f6f8;
   --color-surface: #ffffff;
   --color-surface-raised: #ffffff;
-  --color-surface-sunken: #eaedf2;
+  --color-surface-sunken: #f1f3f6;
   --color-overlay: rgb(15 23 32 / 0.48);
 
   /* Borders */
@@ -28,11 +28,11 @@
   --color-text-inverse: #ffffff;
 
   /* Accent / interactive */
-  --color-accent: #0b5fcc;
-  --color-accent-hover: #094ea8;
-  --color-accent-soft: #e5effc;
+  --color-accent: #2f4bd6;
+  --color-accent-hover: #2540bd;
+  --color-accent-soft: #eef1fd;
   --color-on-accent: #ffffff;
-  --color-focus: #0b5fcc;
+  --color-focus: #2f4bd6;
 
   /* Status */
   --color-online: #0b7a43;
@@ -54,12 +54,12 @@
   --color-skeleton-shine: #f3f5f8;
 
   /* Map basemap: desaturated so the vehicle marker carries the colour */
-  --map-tile-filter: grayscale(0.8) contrast(0.78) brightness(1.08);
+  --map-tile-filter: grayscale(0.85) contrast(0.72) brightness(1.12) sepia(0.06);
 
   /* Shadows */
-  --shadow-1: 0 1px 2px rgb(15 23 32 / 0.06), 0 1px 1px rgb(15 23 32 / 0.04);
-  --shadow-2: 0 4px 12px rgb(15 23 32 / 0.08), 0 1px 3px rgb(15 23 32 / 0.06);
-  --shadow-3: 0 16px 40px rgb(15 23 32 / 0.14), 0 4px 12px rgb(15 23 32 / 0.08);
+  --shadow-1: 0 1px 2px rgb(15 23 32 / 0.05), 0 1px 1px rgb(15 23 32 / 0.03);
+  --shadow-2: 0 6px 16px rgb(15 23 32 / 0.08), 0 1px 3px rgb(15 23 32 / 0.05);
+  --shadow-3: 0 18px 44px rgb(15 23 32 / 0.12), 0 4px 12px rgb(15 23 32 / 0.06);
 }
 
 [data-theme='dark'] {
@@ -83,11 +83,11 @@
   --color-text-inverse: #0a0e13;
 
   /* Accent / interactive */
-  --color-accent: #5aa9ff;
-  --color-accent-hover: #82bdff;
-  --color-accent-soft: #10243d;
-  --color-on-accent: #04121f;
-  --color-focus: #8cc8ff;
+  --color-accent: #8c9eff;
+  --color-accent-hover: #a9b7ff;
+  --color-accent-soft: #1a2140;
+  --color-on-accent: #0a0e13;
+  --color-focus: #a9b7ff;
 
   /* Status */
   --color-online: #3dd68c;

@@ -10,15 +10,17 @@ import { useSlowFlag } from '../../hooks/useSlowFlag'
 import { useLogout } from '../../hooks/useSession'
 import { readFleetSize, storeFleetSize } from '../../utils/fleetSize'
 import { STATUS_LABEL } from '../../utils/status'
-import { AppShell } from '../AppShell/AppShell'
-import { Button } from '../Button/Button'
+import { knotsToKmh } from '../../utils/units'
+import { AppShell, PANEL_ID } from '../AppShell/AppShell'
 import { ConnectionBanner, type ConnectionState } from '../ConnectionBanner/ConnectionBanner'
 import { DeviceSelector, DeviceSelectorSkeleton } from '../DeviceSelector/DeviceSelector'
 import { VehicleCombobox } from '../DeviceSelector/VehicleCombobox'
 import { VEHICLE_LIST_MAX, VehicleList, VehicleListSkeleton } from '../DeviceSelector/VehicleList'
 import { ErrorState } from '../ErrorState/ErrorState'
 import { MapSkeleton } from '../MapSkeleton/MapSkeleton'
+import { Skeleton } from '../Skeleton/Skeleton'
 import { StatusCard } from '../StatusCard/StatusCard'
+import { UserMenu } from '../UserMenu/UserMenu'
 import styles from './Dashboard.module.css'
 
 // Leaflet (~150 kB) is only downloaded once there is something to put on a map.
@@ -62,6 +64,17 @@ export function Dashboard({ user }: { user: User }) {
   useEffect(() => {
     void import('../VehicleMap/VehicleMap')
   }, [])
+  // Follow-the-vehicle camera: shared by the card switch, the map pill, the
+  // locate button and map dragging. Re-engages on every vehicle switch.
+  const [following, setFollowing] = useState(true)
+  const [followedId, setFollowedId] = useState(selectedDevice?.id ?? null)
+  if (followedId !== (selectedDevice?.id ?? null)) {
+    setFollowedId(selectedDevice?.id ?? null)
+    setFollowing(true)
+  }
+  // Side panel + floating card hidden to give the map the whole width (desktop)
+  const [collapsed, setCollapsed] = useState(false)
+
   useDocumentTitle(
     selectedDevice ? `${selectedDevice.name} · ${STATUS_LABEL[selectedDevice.status]}` : 'Flota',
   )
@@ -122,22 +135,65 @@ export function Dashboard({ user }: { user: User }) {
   // Retries of a failing first load can keep the skeleton up for 7 s+: explain the wait.
   const slow = useSlowFlag(devicesQuery.isPending || positionLoading)
 
-  const actions = (
-    <>
-      <span className={styles.user}>{user.name}</span>
-      <Button
-        variant="ghost"
-        onClick={() => logout.mutate()}
-        loading={logout.isPending}
-        loadingLabel="Saliendo…"
-        icon={<LogoutIcon />}
-        className={styles.logout}
-      >
-        {/* Visually hidden on very narrow screens; stays the accessible name */}
-        <span className={styles.logoutLabel}>Cerrar sesión</span>
-      </Button>
-    </>
+  const onlineCount = devices?.filter((d) => d.status === 'online').length ?? 0
+  // Rendered (as a placeholder) while the list loads, so the header doesn't shift
+  const actions = devicesQuery.isPending ? (
+    <p className={styles.fleetPill} aria-hidden="true">
+      <span className={styles.fleetDot} />
+      <Skeleton text="0 de 0 en línea" />
+    </p>
+  ) : (
+    devices &&
+    devices.length > 0 && (
+      <p className={styles.fleetPill} data-all-online={onlineCount === devices.length || undefined}>
+        <span className={styles.fleetDot} aria-hidden="true" />
+        {onlineCount} de {devices.length} en línea
+      </p>
+    )
   )
+  const account = (
+    <UserMenu
+      name={user.name}
+      email={user.email}
+      onLogout={() => logout.mutate()}
+      loggingOut={logout.isPending}
+    />
+  )
+
+  const selectedLive = positionQuery.data
+    ? {
+        speedKmh: knotsToKmh(positionQuery.data.speed),
+        fixTime: positionQuery.data.fixTime,
+      }
+    : undefined
+
+  const card = !devices ? (
+    devicesQuery.isPending ? (
+      <StatusCard
+        device={null}
+        position={undefined}
+        isLoading
+        slow={slow}
+        onCollapse={sideBySide ? () => setCollapsed(true) : undefined}
+        collapseControls={PANEL_ID}
+      />
+    ) : null
+  ) : selectedDevice ? (
+    <StatusCard
+      device={selectedDevice}
+      position={positionQuery.data}
+      isLoading={positionLoading}
+      slow={slow}
+      error={positionQuery.error}
+      onRetry={() => positionQuery.refetch()}
+      retrying={positionQuery.isFetching}
+      isStale={positionStale}
+      following={following}
+      onFollowingChange={setFollowing}
+      onCollapse={sideBySide ? () => setCollapsed(true) : undefined}
+      collapseControls={PANEL_ID}
+    />
+  ) : null
 
   let panel
   if (devicesQuery.isPending) {
@@ -149,7 +205,8 @@ export function Dashboard({ user }: { user: User }) {
         ) : (
           <DeviceSelectorSkeleton />
         )}
-        <StatusCard device={null} position={undefined} isLoading slow={slow} />
+        {/* Beside the map the card floats over it (mapOverlay); on mobile it's here */}
+        {!sideBySide && card}
       </>
     )
   } else if (devicesQuery.isError && !devices) {
@@ -195,6 +252,7 @@ export function Dashboard({ user }: { user: User }) {
               devices={devices}
               selectedId={selectedDevice?.id ?? null}
               onChange={setSelectedId}
+              selectedLive={selectedLive}
             />
           ) : devices.length > VEHICLE_LIST_MAX ? (
             <VehicleCombobox
@@ -211,16 +269,7 @@ export function Dashboard({ user }: { user: User }) {
           )}
         </div>
         {selectedDevice ? (
-          <StatusCard
-            device={selectedDevice}
-            position={positionQuery.data}
-            isLoading={positionLoading}
-            slow={slow}
-            error={positionQuery.error}
-            onRetry={() => positionQuery.refetch()}
-            retrying={positionQuery.isFetching}
-            isStale={positionStale}
-          />
+          !sideBySide && card
         ) : (
           <p className={styles.muted}>Selecciona un vehículo para ver su posición y estado.</p>
         )}
@@ -231,7 +280,11 @@ export function Dashboard({ user }: { user: User }) {
   return (
     <AppShell
       actions={actions}
+      account={account}
       panel={panel}
+      mapOverlay={sideBySide ? card : null}
+      collapsed={collapsed}
+      onExpand={() => setCollapsed(false)}
       map={
         <>
           {selectedDevice && mapMounted ? (
@@ -240,6 +293,8 @@ export function Dashboard({ user }: { user: User }) {
                 device={selectedDevice}
                 position={positionQuery.data}
                 stale={positionStale}
+                following={following}
+                onFollowingChange={setFollowing}
               />
             </Suspense>
           ) : mapLoading ? (
@@ -257,23 +312,5 @@ export function Dashboard({ user }: { user: User }) {
         </>
       }
     />
-  )
-}
-
-function LogoutIcon() {
-  return (
-    <svg
-      viewBox="0 0 20 20"
-      width="18"
-      height="18"
-      fill="none"
-      stroke="currentColor"
-      strokeWidth="1.6"
-      strokeLinecap="round"
-      strokeLinejoin="round"
-      aria-hidden="true"
-    >
-      <path d="M8 3.5H5A1.5 1.5 0 0 0 3.5 5v10A1.5 1.5 0 0 0 5 16.5h3M13 13.5 16.5 10 13 6.5M16.5 10H8" />
-    </svg>
   )
 }

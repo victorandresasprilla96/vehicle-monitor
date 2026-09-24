@@ -188,7 +188,20 @@ export function BottomSheet({
       hidden={hidden}
       data-expanded={(enabled && expanded) || undefined}
       data-dragging={drag ? true : undefined}
-      style={enabled ? { transform: `translateY(${offset}px)` } : undefined}
+      // Collapsed position is relative to the sheet's own height (100%), not a
+      // measured pixel height: when content grows (data arrives) the browser
+      // re-resolves it in the same frame — a stale px offset made the sheet jump.
+      style={
+        !enabled
+          ? undefined
+          : {
+              transform: drag
+                ? `translateY(${drag.offset}px)`
+                : expanded
+                  ? 'translateY(0)'
+                  : `translateY(calc(100% - ${metrics.peek}px))`,
+            }
+      }
       onFocusCapture={onFocusCapture}
     >
       {/* Handle only as a sheet; `false` keeps the slot so the body never remounts */}
