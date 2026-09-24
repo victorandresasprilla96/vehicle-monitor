@@ -22,33 +22,44 @@ function mockLayout(sideBySide: boolean) {
 
 afterEach(() => vi.restoreAllMocks())
 
-const renderShell = () =>
-  renderWithProviders(<AppShell panel={<p>Contenido del panel</p>} map={<p>Mapa</p>} />)
-
 describe('AppShell', () => {
-  it('lets the operator collapse the panel beside the map (disclosure pattern)', async () => {
+  it('shows a restore disclosure when the panel is collapsed beside the map', async () => {
     mockLayout(true)
-    renderShell()
-    const toggle = screen.getByRole('button', { name: 'Panel del vehículo' })
-    const panel = screen.getByRole('complementary', { name: 'Estado del vehículo' })
-    expect(toggle).toHaveAttribute('aria-expanded', 'true')
-    expect(toggle).toHaveAttribute('aria-controls', panel.id)
-
-    await userEvent.click(toggle)
-    expect(toggle).toHaveAttribute('aria-expanded', 'false')
+    const onExpand = vi.fn()
+    renderWithProviders(
+      <AppShell
+        panel={<p>Contenido del panel</p>}
+        map={<p>Mapa</p>}
+        collapsed
+        onExpand={onExpand}
+      />,
+    )
+    const panel = document.getElementById('vehicle-panel')!
     expect(panel).not.toBeVisible()
+    const restore = screen.getByRole('button', { name: 'Panel del vehículo' })
+    expect(restore).toHaveAttribute('aria-expanded', 'false')
+    expect(restore).toHaveAttribute('aria-controls', panel.id)
     // Skip link would point to a hidden panel: it's removed while collapsed
     expect(
       screen.queryByRole('link', { name: 'Saltar al estado del vehículo' }),
     ).not.toBeInTheDocument()
 
-    await userEvent.click(toggle)
-    expect(panel).toBeVisible()
+    await userEvent.click(restore)
+    expect(onExpand).toHaveBeenCalled()
+  })
+
+  it('floats the overlay card over the map beside the panel', () => {
+    mockLayout(true)
+    renderWithProviders(
+      <AppShell panel={<p>Lista</p>} map={<p>Mapa</p>} mapOverlay={<p>Tarjeta</p>} />,
+    )
+    expect(screen.getByRole('region', { name: 'Mapa' })).toHaveTextContent('Tarjeta')
   })
 
   it('never offers collapsing in the stacked (mobile) layout', () => {
     mockLayout(false)
-    renderShell()
+    renderWithProviders(<AppShell panel={<p>Contenido del panel</p>} map={<p>Mapa</p>} collapsed />)
+    // Stacked layout ignores `collapsed`: the panel stays and there is no restore button
     expect(screen.queryByRole('button', { name: 'Panel del vehículo' })).not.toBeInTheDocument()
     expect(screen.getByRole('complementary', { name: 'Estado del vehículo' })).toBeVisible()
   })

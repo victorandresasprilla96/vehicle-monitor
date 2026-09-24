@@ -69,3 +69,42 @@
 .picker {
   display: contents;
 }
+
+/* Header fleet status: "● 2 de 2 en línea" */
+.fleetPill {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+  min-height: 2.5rem;
+  padding: 0 var(--space-4);
+  border-radius: var(--radius-full);
+  background-color: var(--color-warning-soft);
+  color: var(--color-warning);
+  font-size: var(--font-size-sm);
+  font-weight: var(--font-weight-semibold);
+  white-space: nowrap;
+}
+
+.fleetPill[data-all-online] {
+  background-color: var(--color-online-soft);
+  color: var(--color-online);
+}
+
+.fleetDot {
+  width: 0.5rem;
+  height: 0.5rem;
+  border-radius: var(--radius-full);
+  background-color: currentColor;
+}
+
+@media (max-width: 48rem) {
+  .fleetPill {
+    display: none;
+  }
+}
+
+@media (forced-colors: active) {
+  .fleetPill {
+    border: 1px solid CanvasText;
+  }
+}

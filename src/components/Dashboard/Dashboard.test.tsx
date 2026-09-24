@@ -153,7 +153,7 @@ describe('Dashboard', () => {
     expect(card).toHaveTextContent('Cargando datos del vehículo…')
     // Real labels are already in place; placeholder values are aria-hidden
     expect(screen.getByText('Velocidad')).toBeInTheDocument()
-    expect(screen.getByText('00 km/h')).toHaveAttribute('aria-hidden', 'true')
+    expect(screen.getByText('00')).toHaveAttribute('aria-hidden', 'true')
   })
 
   it('reports a failed first position load as an error, not as "no position yet"', async () => {

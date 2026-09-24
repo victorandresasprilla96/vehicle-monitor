@@ -15,18 +15,22 @@ interface VehicleMarkerProps {
   stale: boolean
   /** Screen-reader description, e.g. "Camión 01, en línea, 43 km/h, rumbo noreste" */
   label: string
+  /** Visible tag under the marker, e.g. "Camión 01 · 43 km/h" (decorative: the label says it) */
+  tag: string
   animate: boolean
 }
 
 // Puck + heading arrow (same shape language as the brand mark; points north at 0°).
 // The raised disc keeps the vehicle findable at a glance over a busy street map.
 const ICON_HTML = `
+  <span class="${styles.halo}"></span>
   <span class="${styles.pulse}"></span>
   <span class="${styles.puck}">
     <svg class="${styles.arrow}" viewBox="0 0 32 32" width="24" height="24" aria-hidden="true" focusable="false">
       <path d="M16 3 26.5 27.5 16 22 5.5 27.5Z" />
     </svg>
   </span>
+  <span class="${styles.tag}" aria-hidden="true"></span>
 `
 
 /**
@@ -42,6 +46,7 @@ export function VehicleMarker({
   status,
   stale,
   label,
+  tag,
   animate,
 }: VehicleMarkerProps) {
   const map = useMap()
@@ -95,14 +100,16 @@ export function VehicleMarker({
     )
   }, [deviceId, lat, lng, course, animate])
 
-  // Status / label → attributes only (cheap, no marker rebuild)
+  // Status / label / tag → DOM attributes and text only (cheap, no marker rebuild)
   useEffect(() => {
     const el = markerRef.current?.getElement()
     if (!el) return
     el.dataset.status = status
     el.toggleAttribute('data-stale', stale)
     el.setAttribute('aria-label', label)
-  }, [status, stale, label])
+    const tagEl = el.querySelector(`.${styles.tag}`)
+    if (tagEl) tagEl.textContent = tag
+  }, [status, stale, label, tag])
 
   return null
 }

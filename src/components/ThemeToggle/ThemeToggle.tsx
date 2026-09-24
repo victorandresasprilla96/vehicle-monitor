@@ -2,9 +2,10 @@ import { useTheme } from '../../hooks/useTheme'
 import styles from './ThemeToggle.module.css'
 
 /**
- * Light/dark switch. Uses role="switch" so screen readers announce
- * "Modo oscuro, interruptor, activado/desactivado"; the name stays constant
- * and only the checked state changes. Native <button> gives Space/Enter.
+ * Light/dark switch as a compact icon button. Keeps role="switch" so screen
+ * readers announce "Modo oscuro, interruptor, activado/desactivado"; the name
+ * stays constant (visually hidden) and only the checked state changes.
+ * The icon shows the theme you'd switch *to* (moon in light, sun in dark).
  */
 export function ThemeToggle() {
   const { theme, toggleTheme } = useTheme()
@@ -17,34 +18,33 @@ export function ThemeToggle() {
       aria-checked={isDark}
       onClick={toggleTheme}
       className={styles.toggle}
+      title={isDark ? 'Cambiar a modo claro' : 'Cambiar a modo oscuro'}
     >
-      <span className={styles.label}>Modo oscuro</span>
-      <span className={styles.track} aria-hidden="true">
-        <SunIcon className={styles.iconSun} />
-        <MoonIcon className={styles.iconMoon} />
-        <span className={styles.thumb} />
-      </span>
+      <span className="sr-only">Modo oscuro</span>
+      {isDark ? <SunIcon /> : <MoonIcon />}
     </button>
   )
 }
 
-function SunIcon({ className }: { className: string }) {
+function SunIcon() {
   return (
-    <svg className={className} viewBox="0 0 16 16" width="12" height="12" fill="none">
-      <circle cx="8" cy="8" r="3" fill="currentColor" />
-      <g stroke="currentColor" strokeWidth="1.5" strokeLinecap="round">
-        <path d="M8 1v1.5M8 13.5V15M1 8h1.5M13.5 8H15M3.05 3.05l1.06 1.06M11.89 11.89l1.06 1.06M3.05 12.95l1.06-1.06M11.89 4.11l1.06-1.06" />
+    <svg viewBox="0 0 24 24" width="22" height="22" fill="none" aria-hidden="true">
+      <circle cx="12" cy="12" r="4.2" stroke="currentColor" strokeWidth="1.8" />
+      <g stroke="currentColor" strokeWidth="1.8" strokeLinecap="round">
+        <path d="M12 2.5v2M12 19.5v2M2.5 12h2M19.5 12h2M5.3 5.3l1.4 1.4M17.3 17.3l1.4 1.4M5.3 18.7l1.4-1.4M17.3 6.7l1.4-1.4" />
       </g>
     </svg>
   )
 }
 
-function MoonIcon({ className }: { className: string }) {
+function MoonIcon() {
   return (
-    <svg className={className} viewBox="0 0 16 16" width="12" height="12">
+    <svg viewBox="0 0 24 24" width="22" height="22" fill="none" aria-hidden="true">
       <path
-        fill="currentColor"
-        d="M13.5 10.2A5.8 5.8 0 0 1 5.8 2.5a.5.5 0 0 0-.66-.6A6.5 6.5 0 1 0 14.1 10.86a.5.5 0 0 0-.6-.66Z"
+        d="M20 14.6A8.2 8.2 0 0 1 9.4 4a.6.6 0 0 0-.8-.7A8.9 8.9 0 1 0 20.7 15.4a.6.6 0 0 0-.7-.8Z"
+        stroke="currentColor"
+        strokeWidth="1.8"
+        strokeLinejoin="round"
       />
     </svg>
   )

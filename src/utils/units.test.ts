@@ -11,18 +11,21 @@ describe('knotsToKmh', () => {
   })
 })
 
-describe('courseToCompass', () => {
+describe('courseToCompass (16 points)', () => {
   it.each([
     [0, 'N'],
-    [22, 'N'],
-    [23, 'NE'],
+    [11, 'N'],
+    [12, 'NNE'],
     [45, 'NE'],
     [90, 'E'],
     [180, 'S'],
+    [192, 'SSO'],
     [225, 'SO'],
     [270, 'O'],
-    [337.5, 'N'],
-    [359, 'N'],
+    [292.5, 'ONO'],
+    [340, 'NNO'],
+    [349, 'N'],
+    [355, 'N'],
     [360, 'N'],
     [-90, 'O'],
   ])('%d° → %s', (degrees, point) => {
@@ -31,6 +34,6 @@ describe('courseToCompass', () => {
 
   it('has a spoken form for screen readers', () => {
     expect(courseToCompassLong(45)).toBe('noreste')
-    expect(courseToCompassLong(200)).toBe('sur')
+    expect(courseToCompassLong(192)).toBe('sursuroeste')
   })
 })

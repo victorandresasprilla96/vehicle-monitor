@@ -1,9 +1,10 @@
+import L from 'leaflet'
 import 'leaflet/dist/leaflet.css'
 import { useCallback, useEffect, useRef, useState, type CSSProperties } from 'react'
 import { MapContainer, TileLayer, ZoomControl, useMap } from 'react-leaflet'
 import type { Device, Position } from '../../api/types'
 import { useReducedMotion } from '../../hooks/useReducedMotion'
-import { useMapBottomInset } from '../AppShell/layoutContext'
+import { useMapInsets } from '../AppShell/layoutContext'
 import { STATUS_LABEL } from '../../utils/status'
 import { courseToCompassLong, knotsToKmh } from '../../utils/units'
 import { MapSkeleton } from '../MapSkeleton/MapSkeleton'
@@ -28,9 +29,18 @@ interface VehicleMapProps {
   /** undefined: loading this vehicle · null: it never reported a position */
   position: Position | null | undefined
   stale: boolean
+  /** Follow-the-vehicle camera, shared with the status card's switch */
+  following: boolean
+  onFollowingChange: (following: boolean) => void
 }
 
-export default function VehicleMap({ device, position, stale }: VehicleMapProps) {
+export default function VehicleMap({
+  device,
+  position,
+  stale,
+  following,
+  onFollowingChange,
+}: VehicleMapProps) {
   const reducedMotion = useReducedMotion()
   const [tilesReady, setTilesReady] = useState(false)
   // Height of Leaflet's attribution strip: the follow button sits above it, so
@@ -38,15 +48,8 @@ export default function VehicleMap({ device, position, stale }: VehicleMapProps)
   // null until measured: CSS falls back to the one-line height, so the button
   // doesn't jump up when the first measurement arrives (measured as layout shift).
   const [attributionHeight, setAttributionHeight] = useState<number | null>(null)
-  const [following, setFollowing] = useState(true)
-  const [followedDevice, setFollowedDevice] = useState(device.id)
-  const stopFollowing = useCallback(() => setFollowing(false), [])
-
-  // Switching vehicle always re-engages follow mode (derived during render)
-  if (followedDevice !== device.id) {
-    setFollowedDevice(device.id)
-    setFollowing(true)
-  }
+  const stopFollowing = useCallback(() => onFollowingChange(false), [onFollowingChange])
+  const startFollowing = useCallback(() => onFollowingChange(true), [onFollowingChange])
 
   // Never leave the skeleton up if tiles are slow or blocked: show the marker anyway.
   useEffect(() => {
@@ -65,18 +68,6 @@ export default function VehicleMap({ device, position, stale }: VehicleMapProps)
           : ({ '--attribution-height': `${attributionHeight}px` } as CSSProperties)
       }
     >
-      {/* First in DOM so Tab order is: follow toggle → map → zoom controls */}
-      <button
-        type="button"
-        className={styles.follow}
-        aria-pressed={following}
-        disabled={!position}
-        onClick={() => setFollowing((f) => !f)}
-      >
-        <CrosshairIcon />
-        <span className={styles.followLabel}>Seguir vehículo</span>
-      </button>
-
       <MapContainer
         className={styles.map}
         center={[initial.latitude, initial.longitude]}
@@ -97,6 +88,8 @@ export default function VehicleMap({ device, position, stale }: VehicleMapProps)
           eventHandlers={{ tileload: () => setTilesReady(true), load: () => setTilesReady(true) }}
         />
         <ZoomControl position="bottomright" zoomInTitle="Acercar" zoomOutTitle="Alejar" />
+        {/* Added after zoom: Leaflet stacks bottom controls upwards, so it sits above it */}
+        <LocateControl disabled={!position} onLocate={startFollowing} />
         <MapBehaviour
           deviceId={device.id}
           target={position ? [position.latitude, position.longitude] : null}
@@ -115,6 +108,7 @@ export default function VehicleMap({ device, position, stale }: VehicleMapProps)
             stale={stale}
             animate={!reducedMotion}
             label={markerLabel(device, position)}
+            tag={`${device.name} · ${Math.round(knotsToKmh(position.speed))} km/h`}
           />
         )}
       </MapContainer>
@@ -130,9 +124,70 @@ export default function VehicleMap({ device, position, stale }: VehicleMapProps)
           <p>Este vehículo aún no ha enviado ninguna posición.</p>
         </div>
       )}
+
+      {/* Follow state at a glance, with the one action that changes it */}
+      {position && (
+        <div className={styles.pill} data-following={following || undefined}>
+          <CrosshairIcon />
+          <span className={styles.pillText} role="status">
+            {following ? `Siguiendo a ${device.name}` : 'Mapa libre'}
+          </span>
+          <button
+            type="button"
+            className={styles.pillAction}
+            onClick={() => onFollowingChange(!following)}
+          >
+            {following ? 'Dejar de seguir' : `Seguir a ${device.name}`}
+          </button>
+        </div>
+      )}
     </div>
   )
 }
+
+/**
+ * "Centrar en el vehículo" as a Leaflet control, so it stacks with the zoom
+ * buttons in the same corner. A real <button>: keyboard and screen readers work.
+ */
+function LocateControl({ disabled, onLocate }: { disabled: boolean; onLocate: () => void }) {
+  const map = useMap()
+  const onLocateRef = useRef(onLocate)
+  const buttonRef = useRef<HTMLButtonElement | null>(null)
+
+  useEffect(() => {
+    onLocateRef.current = onLocate
+  }, [onLocate])
+
+  useEffect(() => {
+    const Control = L.Control.extend({
+      onAdd() {
+        const wrap = L.DomUtil.create('div', `leaflet-bar ${styles.locate}`)
+        const button = L.DomUtil.create('button', '', wrap)
+        button.type = 'button'
+        button.setAttribute('aria-label', 'Centrar en el vehículo')
+        button.title = 'Centrar en el vehículo'
+        button.innerHTML = LOCATE_ICON
+        L.DomEvent.disableClickPropagation(wrap)
+        L.DomEvent.on(button, 'click', () => onLocateRef.current())
+        buttonRef.current = button
+        return wrap
+      },
+    })
+    const control = new Control({ position: 'bottomright' })
+    control.addTo(map)
+    return () => {
+      control.remove()
+    }
+  }, [map])
+
+  useEffect(() => {
+    if (buttonRef.current) buttonRef.current.disabled = disabled
+  }, [disabled])
+
+  return null
+}
+
+const LOCATE_ICON = `<svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" aria-hidden="true" focusable="false"><circle cx="12" cy="12" r="6.5"/><circle cx="12" cy="12" r="2.2" fill="currentColor" stroke="none"/><path d="M12 2.5v3M12 18.5v3M2.5 12h3M18.5 12h3"/></svg>`
 
 function markerLabel(device: Device, position: Position): string {
   const speed = Math.round(knotsToKmh(position.speed))
@@ -158,9 +213,9 @@ function MapBehaviour({
   onAttributionResize,
 }: MapBehaviourProps) {
   const map = useMap()
-  // Part of the map hidden behind the mobile bottom sheet: centre the vehicle
-  // in the *visible* area by shifting the camera down by half of it.
-  const bottomInset = useMapBottomInset()
+  // Parts of the map hidden behind overlays (mobile sheet at the bottom, status
+  // card on the left): centre the vehicle in the *visible* area.
+  const { bottom: bottomInset, left: leftInset } = useMapInsets()
   const [lat, lng] = target ?? [null, null]
   // Which vehicle the camera last framed; a ref, since it doesn't affect rendering
   const cameraDevice = useRef<number | null>(null)
@@ -193,9 +248,9 @@ function MapBehaviour({
   }, [map, onAttributionResize])
 
   // Latest camera inputs, for the resize handler below (it outlives renders)
-  const camera = useRef({ lat, lng, following, bottomInset })
+  const camera = useRef({ lat, lng, following, bottomInset, leftInset })
   useEffect(() => {
-    camera.current = { lat, lng, following, bottomInset }
+    camera.current = { lat, lng, following, bottomInset, leftInset }
   })
 
   // The container resizes without a window resize (panel collapsed, phone
@@ -208,7 +263,7 @@ function MapBehaviour({
       if (!c.following || c.lat === null || c.lng === null) return
       const zoom = map.getZoom()
       const centre = map.unproject(
-        map.project([c.lat, c.lng], zoom).add([0, c.bottomInset / 2]),
+        map.project([c.lat, c.lng], zoom).add([-c.leftInset / 2, c.bottomInset / 2]),
         zoom,
       )
       map.setView(centre, zoom, { animate: false })
@@ -234,7 +289,10 @@ function MapBehaviour({
     if (lat === null || lng === null || !following) return
     const firstFrame = cameraDevice.current !== deviceId
     const zoom = firstFrame ? Math.max(map.getZoom(), DEFAULT_ZOOM) : map.getZoom()
-    const centre = map.unproject(map.project([lat, lng], zoom).add([0, bottomInset / 2]), zoom)
+    const centre = map.unproject(
+      map.project([lat, lng], zoom).add([-leftInset / 2, bottomInset / 2]),
+      zoom,
+    )
     if (firstFrame) {
       map.setView(centre, zoom, { animate: false })
       cameraDevice.current = deviceId
@@ -247,7 +305,7 @@ function MapBehaviour({
       // exactly the marker's curve, so the vehicle stays centred while both move.
       easeLinearity: 1 / 3,
     })
-  }, [map, lat, lng, following, animate, deviceId, bottomInset])
+  }, [map, lat, lng, following, animate, deviceId, bottomInset, leftInset])
 
   return null
 }

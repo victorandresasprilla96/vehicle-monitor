@@ -1,78 +1,130 @@
-.wrap {
-  position: relative;
+.fleet {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+  min-width: 0;
 }
 
+.heading {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: var(--space-2);
+  padding-top: var(--space-2);
+}
+
+.title {
+  font-size: var(--font-size-xl);
+  font-weight: var(--font-weight-bold);
+  letter-spacing: var(--letter-spacing-tight);
+}
+
+.count {
+  color: var(--color-text-muted);
+  font-size: var(--font-size-sm);
+}
+
+/* ---------- Filter segmented control (native radios) ---------- */
+.filters {
+  display: flex;
+  gap: var(--space-1);
+  min-width: 0;
+  margin: 0;
+  padding: var(--space-1);
+  border: none;
+  border-radius: var(--radius-md);
+  background-color: var(--color-surface-sunken);
+}
+
+.segment {
+  display: inline-flex;
+  flex: 1;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-1-5);
+  min-height: 2.5rem;
+  padding: 0 var(--space-2);
+  border-radius: calc(var(--radius-md) - var(--space-1));
+  color: var(--color-text-muted);
+  font-size: var(--font-size-sm);
+  font-weight: var(--font-weight-medium);
+  white-space: nowrap;
+  cursor: pointer;
+  transition:
+    background-color var(--duration-fast) var(--ease-standard),
+    color var(--duration-fast) var(--ease-standard);
+}
+
+.segment:hover {
+  color: var(--color-text);
+}
+
+.segment:has(.radio:checked) {
+  background-color: var(--color-surface-raised);
+  box-shadow: var(--shadow-1);
+  color: var(--color-text);
+  font-weight: var(--font-weight-semibold);
+}
+
+.segment:has(.radio:focus-visible) {
+  outline: var(--focus-ring-width) solid var(--color-focus);
+  outline-offset: 0;
+}
+
+.segmentCount {
+  color: var(--color-text-muted);
+  font-family: var(--font-mono);
+  font-size: var(--font-size-xs);
+  font-weight: var(--font-weight-regular);
+}
+
+/* ---------- Vehicle cards ---------- */
 .list {
   display: flex;
   flex-direction: column;
-  gap: var(--space-1-5);
+  gap: var(--space-3);
   min-width: 0;
   margin: 0;
   padding: 0;
   border: none;
 }
 
-.skeletonList {
-  gap: 0;
-}
-
-.legend {
-  display: block;
-  margin-bottom: var(--space-1-5);
-  padding: 0;
-  font-size: var(--font-size-sm);
-  font-weight: var(--font-weight-medium);
-}
-
-.hint {
-  color: var(--color-text-muted);
-  line-height: var(--line-height-normal);
-  font-size: var(--font-size-xs);
-  font-variant-numeric: tabular-nums;
-}
-
-/* Counter aligned with the legend (the legend itself must stay a direct child) */
-.hint[data-floating] {
-  position: absolute;
-  top: 0;
-  right: 0;
-}
-
-.options {
-  display: flex;
-  flex-direction: column;
-  gap: var(--space-1-5);
-}
-
 .option {
   display: flex;
   align-items: center;
   gap: var(--space-3);
-  min-height: var(--tap-target-min);
-  padding: var(--space-2) var(--space-3);
-  border: var(--border-width) solid var(--color-border-strong);
-  border-radius: var(--radius-md);
+  min-height: 4.5rem;
+  padding: var(--space-3) var(--space-4) var(--space-3) var(--space-3);
+  border: var(--border-width) solid var(--color-border);
+  border-radius: var(--radius-lg);
   background-color: var(--color-surface);
   cursor: pointer;
   transition:
     border-color var(--duration-fast) var(--ease-standard),
-    background-color var(--duration-fast) var(--ease-standard);
+    background-color var(--duration-fast) var(--ease-standard),
+    box-shadow var(--duration-fast) var(--ease-standard);
+}
+
+.option:hover {
+  border-color: var(--color-border-strong);
 }
 
 .option[data-skeleton] {
   cursor: default;
 }
 
-.option:hover {
-  border-color: var(--color-text-muted);
-}
-
 .option:has(.radio:checked) {
   border-color: var(--color-accent);
   background-color: var(--color-accent-soft);
+  box-shadow: 0 0 0 1px var(--color-accent);
 }
 
-/* The real radio is visually hidden; the whole card shows its focus */
+.option:has(.radio:focus-visible) {
+  outline: var(--focus-ring-width) solid var(--color-focus);
+  outline-offset: var(--focus-ring-offset);
+}
+
+/* The real radios are visually hidden; the segment / card shows state + focus */
 .radio {
   position: absolute;
   width: 1px;
@@ -84,56 +136,77 @@
   opacity: 0;
 }
 
-.option:has(.radio:focus-visible) {
-  outline: var(--focus-ring-width) solid var(--color-focus);
-  outline-offset: var(--focus-ring-offset);
+.icon {
+  display: grid;
+  flex-shrink: 0;
+  place-items: center;
+  width: 2.75rem;
+  height: 2.75rem;
+  border-radius: var(--radius-md);
+  background-color: var(--color-surface-sunken);
+  color: var(--color-text-muted);
+  transition:
+    background-color var(--duration-fast) var(--ease-standard),
+    color var(--duration-fast) var(--ease-standard);
+}
+
+.option:has(.radio:checked) .icon {
+  background-color: var(--color-accent);
+  color: var(--color-on-accent);
 }
 
 .text {
   display: flex;
   flex: 1;
   flex-direction: column;
+  gap: var(--space-0-5);
   min-width: 0;
 }
 
 .name {
   overflow: hidden;
-  font-size: var(--font-size-sm);
+  font-size: var(--font-size-md);
   font-weight: var(--font-weight-semibold);
   text-overflow: ellipsis;
   white-space: nowrap;
 }
 
 .status {
-  font-size: var(--font-size-xs);
-  font-weight: var(--font-weight-medium);
+  display: flex;
+  align-items: center;
+  gap: var(--space-1-5);
+  overflow: hidden;
+  color: var(--color-text-muted);
+  font-size: var(--font-size-sm);
+  white-space: nowrap;
 }
 
-.status[data-status='online'] {
-  color: var(--color-online);
+.ago {
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
-.status[data-status='offline'] {
-  color: var(--color-offline);
-}
-
-.status[data-status='unknown'] {
-  color: var(--color-unknown);
-}
-
-.check {
+.speed {
   flex-shrink: 0;
-  color: var(--color-accent);
-  opacity: 0;
-  transition: opacity var(--duration-fast) var(--ease-standard);
+  color: var(--color-text);
+  font-family: var(--font-mono);
+  font-size: var(--font-size-sm);
+  font-weight: var(--font-weight-semibold);
+  font-variant-numeric: tabular-nums;
 }
 
-.option:has(.radio:checked) .check {
-  opacity: 1;
+.empty {
+  padding: var(--space-4);
+  border: var(--border-width) dashed var(--color-border-strong);
+  border-radius: var(--radius-lg);
+  color: var(--color-text-muted);
+  font-size: var(--font-size-sm);
+  text-align: center;
 }
 
 @media (forced-colors: active) {
-  .option:has(.radio:checked) {
+  .option:has(.radio:checked),
+  .segment:has(.radio:checked) {
     outline: 2px solid Highlight;
   }
 }

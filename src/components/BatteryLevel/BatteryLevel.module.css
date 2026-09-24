@@ -1,55 +1,55 @@
 .battery {
-  --battery-color: var(--color-text-muted);
-
-  display: inline-flex;
-  align-items: center;
-  gap: var(--space-2);
-  vertical-align: top;
-  transition: color var(--duration-slow) var(--ease-standard);
+  --battery-color: var(--color-online);
 }
 
 .battery[data-tier='low'] {
   --battery-color: var(--color-warning);
-  color: var(--color-warning);
 }
 
 .battery[data-tier='critical'] {
   --battery-color: var(--color-danger);
-  color: var(--color-danger);
 }
 
-.glyph {
-  flex-shrink: 0;
+.value {
+  transition: color var(--duration-slow) var(--ease-standard);
 }
 
-.shell {
-  fill: none;
-  stroke: var(--color-border-strong);
-  stroke-width: 1.5;
+.battery[data-tier='low'] .value,
+.battery[data-tier='critical'] .value {
+  color: var(--battery-color);
 }
 
-.tip {
-  fill: var(--color-border-strong);
+/* Full-width track along the bottom of the tile (the tile is position: relative) */
+.bar {
+  position: absolute;
+  right: var(--space-5);
+  bottom: var(--space-5);
+  left: var(--space-5);
+  height: 0.5rem;
+  overflow: hidden;
+  border-radius: var(--radius-full);
+  background-color: var(--color-border);
 }
 
 .fill {
-  fill: var(--battery-color);
+  display: block;
+  height: 100%;
+  border-radius: inherit;
+  background-color: var(--battery-color);
   transition:
     width var(--duration-slow) var(--ease-standard),
-    fill var(--duration-slow) var(--ease-standard);
+    background-color var(--duration-slow) var(--ease-standard);
 }
 
 @media (forced-colors: active) {
-  .glyph {
+  .bar {
     forced-color-adjust: none;
+    outline: 1px solid CanvasText;
+    background-color: Canvas;
   }
 
-  .shell {
-    stroke: CanvasText;
-  }
-
-  .tip,
   .fill {
-    fill: CanvasText;
+    forced-color-adjust: none;
+    background-color: CanvasText;
   }
 }

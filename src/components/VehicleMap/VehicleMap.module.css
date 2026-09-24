@@ -31,45 +31,68 @@
   transition: bottom var(--duration-slow) var(--ease-standard);
 }
 
-/* ---------- Leaflet controls, re-themed with our tokens ---------- */
+/* ---------- Map controls: separate floating white buttons (locate, zoom) ---------- */
+.map :global(.leaflet-right .leaflet-control) {
+  margin-right: var(--space-4);
+}
+
+.map :global(.leaflet-bottom .leaflet-control-zoom),
+.map :global(.leaflet-bottom .leaflet-bar) {
+  margin-bottom: var(--space-3);
+}
+
 .map :global(.leaflet-bar) {
   overflow: hidden;
-  border: var(--border-width) solid var(--color-border-strong);
-  border-radius: var(--radius-md);
+  border: var(--border-width) solid var(--color-border);
+  border-radius: var(--radius-lg);
+  background-color: var(--color-surface-raised);
   box-shadow: var(--shadow-2);
 }
 
-.map :global(.leaflet-bar a) {
+.map :global(.leaflet-bar a),
+.map :global(.leaflet-bar button) {
   display: grid;
   place-items: center;
-  width: 2.5rem;
-  height: 2.5rem;
+  width: 3rem;
+  height: 3rem;
+  padding: 0;
+  border: none;
   border-bottom: var(--border-width) solid var(--color-border);
   background-color: var(--color-surface-raised);
   color: var(--color-text);
-  font-size: var(--font-size-xl);
+  font-size: var(--font-size-2xl);
+  font-weight: var(--font-weight-regular);
   line-height: 1;
   transition: background-color var(--duration-fast) var(--ease-standard);
 }
 
-.map :global(.leaflet-bar a:last-child) {
+.map :global(.leaflet-bar a:last-child),
+.map :global(.leaflet-bar button:last-child) {
   border-bottom: none;
 }
 
-.map :global(.leaflet-bar a:hover) {
+.map :global(.leaflet-bar a:hover),
+.map :global(.leaflet-bar button:hover:not(:disabled)) {
   background-color: var(--color-surface-sunken);
   color: var(--color-text);
 }
 
 /* Inset ring: the bar clips overflow, a normal offset would be cut off */
-.map :global(.leaflet-bar a:focus-visible) {
+.map :global(.leaflet-bar a:focus-visible),
+.map :global(.leaflet-bar button:focus-visible) {
   outline: var(--focus-ring-width) solid var(--color-focus);
   outline-offset: -4px;
 }
 
-.map :global(.leaflet-bar a.leaflet-disabled) {
+.map :global(.leaflet-bar a.leaflet-disabled),
+.map :global(.leaflet-bar button:disabled) {
   background-color: var(--color-surface-sunken);
   color: var(--color-text-subtle);
+  cursor: default;
+}
+
+.locate button {
+  cursor: pointer;
 }
 
 .map :global(.leaflet-control-attribution) {
@@ -100,14 +123,27 @@
   --marker-color: var(--color-unknown);
 }
 
+.marker {
+  overflow: visible;
+}
+
+/* Soft static aura, as in the design: locates the vehicle from afar */
+.halo {
+  position: absolute;
+  inset: -1.25rem;
+  border-radius: var(--radius-full);
+  background-color: color-mix(in srgb, var(--marker-color) 16%, transparent);
+  transition: background-color var(--duration-slow) var(--ease-standard);
+}
+
 .puck {
   position: relative;
   z-index: 1;
   display: grid;
   place-items: center;
-  width: 2.5rem;
-  height: 2.5rem;
-  border: 2.5px solid var(--marker-color);
+  width: 2.75rem;
+  height: 2.75rem;
+  border: 3px solid var(--marker-color);
   border-radius: var(--radius-full);
   background-color: var(--color-surface-raised);
   /* Halo in the surface colour around the status ring: the marker carries its
@@ -127,8 +163,32 @@
   transition: fill var(--duration-slow) var(--ease-standard);
 }
 
-.marker[data-stale] .puck {
+.marker[data-stale] .puck,
+.marker[data-stale] .halo {
   opacity: 0.6;
+}
+
+/* "Camión 02 · 16 km/h" under the marker (aria-hidden: the marker's label says it) */
+.tag {
+  position: absolute;
+  top: calc(100% + 1rem);
+  left: 50%;
+  z-index: 2;
+  padding: var(--space-1) var(--space-3);
+  border-radius: var(--radius-sm);
+  background-color: var(--color-text);
+  box-shadow: var(--shadow-2);
+  color: var(--color-bg);
+  font-family: var(--font-sans);
+  font-size: var(--font-size-sm);
+  font-weight: var(--font-weight-semibold);
+  white-space: nowrap;
+  transform: translateX(-50%);
+  pointer-events: none;
+}
+
+.tag:empty {
+  display: none;
 }
 
 .pulse {
@@ -163,47 +223,61 @@
 }
 
 /* ---------- Overlays ---------- */
-/* Bottom-left at every size: the connection banner owns the top centre,
-   zoom + attribution own the bottom right. Same place on mobile and desktop. */
-.follow {
+/* Follow pill: bottom centre of the *visible* map (right of the floating card,
+   above the mobile sheet and the attribution strip). */
+.pill {
   position: absolute;
-  /* Fallback = one line of attribution (measured value replaces it) */
   bottom: calc(
-    var(--map-inset-bottom, 0px) + var(--attribution-height, 1.1875rem) + var(--space-2)
+    var(--map-inset-bottom, 0px) + var(--attribution-height, 1.1875rem) + var(--space-4)
   );
-  left: var(--space-4);
+  left: calc(var(--map-inset-left, 0px) + (100% - var(--map-inset-left, 0px)) / 2);
   z-index: var(--z-overlay);
-  display: inline-flex;
+  display: flex;
   align-items: center;
-  gap: var(--space-2);
-  min-height: 2.5rem;
-  padding: 0 var(--space-3);
-  border: var(--border-width) solid var(--color-border-strong);
-  border-radius: var(--radius-md);
-  background-color: var(--color-surface-raised);
-  box-shadow: var(--shadow-2);
-  color: var(--color-text);
-  font-size: var(--font-size-sm);
-  font-weight: var(--font-weight-medium);
+  gap: var(--space-3);
+  max-width: calc(100% - var(--map-inset-left, 0px) - 2 * var(--space-4) - 3rem);
+  padding: var(--space-1-5) var(--space-1-5) var(--space-1-5) var(--space-4);
+  border-radius: var(--radius-full);
+  background-color: var(--color-text);
+  box-shadow: var(--shadow-3);
+  color: var(--color-bg);
+  font-size: var(--font-size-md);
+  font-weight: var(--font-weight-semibold);
+  white-space: nowrap;
+  transform: translateX(-50%);
   transition:
     bottom var(--duration-slow) var(--ease-standard),
-    background-color var(--duration-fast) var(--ease-standard),
-    border-color var(--duration-fast) var(--ease-standard),
-    color var(--duration-fast) var(--ease-standard);
+    left var(--duration-slow) var(--ease-standard);
 }
 
-.follow:hover:not(:disabled) {
-  border-color: var(--color-text-muted);
+.pill svg {
+  flex-shrink: 0;
 }
 
-.follow[aria-pressed='true'] {
-  border-color: var(--color-accent);
-  background-color: var(--color-accent-soft);
-  color: var(--color-accent);
+.pillText {
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
-.follow:disabled {
-  opacity: 0.6;
+.pillAction {
+  flex-shrink: 0;
+  min-height: 2.5rem;
+  padding: 0 var(--space-4);
+  border: none;
+  border-radius: var(--radius-full);
+  background-color: color-mix(in srgb, var(--color-bg) 16%, transparent);
+  color: var(--color-bg);
+  font-size: var(--font-size-sm);
+  font-weight: var(--font-weight-semibold);
+  transition: background-color var(--duration-fast) var(--ease-standard);
+}
+
+.pillAction:hover {
+  background-color: color-mix(in srgb, var(--color-bg) 26%, transparent);
+}
+
+.pillAction:focus-visible {
+  outline-color: var(--color-bg);
 }
 
 .overlay {
@@ -232,21 +306,10 @@
   text-align: center;
 }
 
-/* Narrow map (small phone, 200 % text): icon-only follow button so it never
-   reaches the zoom control; the label stays as its accessible name. */
-@container (max-width: 26rem) {
-  .follow {
-    min-width: 2.5rem;
-    padding: 0;
-    justify-content: center;
-  }
-
-  .followLabel {
-    position: absolute;
-    width: 1px;
-    height: 1px;
-    overflow: hidden;
-    clip: rect(0, 0, 0, 0);
-    white-space: nowrap;
+/* Narrow maps (phones): the card's "Seguir vehículo" switch and the locate
+   button cover it — the pill would crowd the map, so it steps aside. */
+@container (max-width: 34rem) {
+  .pill {
+    display: none;
   }
 }
