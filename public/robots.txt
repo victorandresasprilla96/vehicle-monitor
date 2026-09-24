@@ -1,0 +1,3 @@
+# Operations tool: nothing to index behind the login, and never the API proxy.
+User-agent: *
+Disallow: /api/

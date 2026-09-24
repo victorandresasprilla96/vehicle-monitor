@@ -53,7 +53,15 @@ export function Dashboard({ user }: { user: User }) {
   // below), so the card appears directly instead of flashing the empty prompt.
   const selectedDevice =
     devices?.find((d) => d.id === selectedId) ?? (devices?.length === 1 ? devices[0] : null)
-  const positionQuery = usePosition(selectedDevice?.id ?? null)
+  // With ?device= in the URL the position can load in parallel with the vehicle
+  // list instead of after it (shorter critical chain to the first map paint).
+  const positionQuery = usePosition(selectedDevice?.id ?? (devices ? null : selectedId))
+
+  // Start downloading the map code now, in parallel with the API calls, rather
+  // than when the first position arrives.
+  useEffect(() => {
+    void import('../VehicleMap/VehicleMap')
+  }, [])
   useDocumentTitle(
     selectedDevice ? `${selectedDevice.name} · ${STATUS_LABEL[selectedDevice.status]}` : 'Flota',
   )

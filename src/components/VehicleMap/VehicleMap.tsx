@@ -13,7 +13,7 @@ import { VehicleMarker } from './VehicleMarker'
 import styles from './VehicleMap.module.css'
 
 const DEFAULT_ZOOM = 16
-const TILE_READY_FALLBACK_MS = 4000
+const TILE_READY_FALLBACK_MS = 2500
 const ARROW_KEYS = new Set(['ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight'])
 
 // OpenStreetMap standard tiles (no API key). CARTO basemaps now watermark
@@ -91,7 +91,10 @@ export default function VehicleMap({ device, position, stale }: VehicleMapProps)
           url={TILE_URL}
           attribution={ATTRIBUTION}
           maxZoom={19}
-          eventHandlers={{ load: () => setTilesReady(true) }}
+          // Reveal the map with the first painted tile; the rest fill in progressively.
+          // Waiting for `load` (every visible tile) kept the skeleton up for seconds
+          // whenever one tile was slow — measured as a 5.7 s LCP in production.
+          eventHandlers={{ tileload: () => setTilesReady(true), load: () => setTilesReady(true) }}
         />
         <ZoomControl position="bottomright" zoomInTitle="Acercar" zoomOutTitle="Alejar" />
         <MapBehaviour
